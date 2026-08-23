@@ -1,36 +1,183 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# AI Chat UI
 
-## Getting Started
+Frontend cho AI Chat — built với **Next.js 16** + **TypeScript** + **Tailwind CSS** + **shadcn/ui**.
 
-First, run the development server:
+## Live Demo
+
+🔗 https://ai-chat-ui-theta.vercel.app
+
+## Tech Stack
+
+| Layer | Technology | Purpose |
+|-------|-----------|---------|
+| Framework | Next.js 16 (App Router) | React framework |
+| Language | TypeScript 5.x | Type safety |
+| Styling | Tailwind CSS 4 | Utility-first CSS |
+| Components | shadcn/ui | Pre-built UI primitives |
+| State | Zustand | Conversation management |
+| Icons | Lucide React | Icon library |
+| AI | Google Gemini (via BE) | LLM inference |
+
+## Architecture
+
+```
+Next.js (Vercel)
+      ↓
+Cloudflare Workers (Hono)
+      ├── D1 Database (conversations, messages)
+      └── Google Gemini API (AI responses)
+```
+
+## Features
+
+- **Streaming AI Chat**: Real-time token-by-token responses
+- **Multi-conversation**: Create, switch, delete conversations
+- **Conversation History**: Persisted in localStorage + D1 database
+- **Markdown Rendering**: Rich text display for AI responses
+- **Source Citations**: Show referenced sources with scores
+- **See Reasoning**: Toggle to view retrieved chunks
+- **Feedback System**: Thumbs up/down on assistant messages
+- **Copy Message**: One-click copy for AI responses
+- **Edit Last Message**: Modify and resend last user message
+- **Regenerate**: Re-generate last AI response
+- **Dark/Light Mode**: Theme toggle with system preference
+- **Error Handling**: Retry logic with user-friendly messages
+- **Responsive Design**: Works on desktop and mobile
+
+## Setup
+
+### Prerequisites
+
+- Node.js 18+
+- Backend API running ([ai-chat-api](https://github.com/zxck5xz/ai-chat-api))
+
+### Installation
+
+```bash
+npm install
+```
+
+### Environment Variables
+
+```bash
+cp .env.example .env.local
+```
+
+Edit `.env.local`:
+
+```env
+# Backend API URL
+NEXT_PUBLIC_API_URL=http://localhost:8787
+```
+
+### Development
 
 ```bash
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+# Frontend runs at http://localhost:3000
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+### Build
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+```bash
+npm run build
+```
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+### Deploy
 
-## Learn More
+```bash
+vercel --prod
+```
 
-To learn more about Next.js, take a look at the following resources:
+## Project Structure
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+```
+ai-chat-ui/
+├── src/
+│   ├── app/
+│   │   ├── layout.tsx              # Root layout + providers
+│   │   ├── page.tsx                # Redirect → /chat
+│   │   ├── globals.css             # Global styles
+│   │   ├── chat/
+│   │   │   └── page.tsx            # Main chat page
+│   │   └── api/chat/
+│   │       └── route.ts            # Local API (fallback)
+│   ├── components/
+│   │   ├── providers.tsx           # Theme + Tooltip + ErrorBoundary
+│   │   ├── ui/                     # shadcn/ui components
+│   │   ├── chat/
+│   │   │   ├── chat-interface.tsx   # Main container + sidebar
+│   │   │   ├── chat-input.tsx       # Input + Send/Stop buttons
+│   │   │   ├── message-list.tsx     # ScrollArea + auto-scroll
+│   │   │   ├── message-bubble.tsx   # User/Assistant messages
+│   │   │   ├── loading-states.tsx   # Loading indicators
+│   │   │   └── sources-panel.tsx    # Sources display
+│   │   └── shared/
+│   │       ├── theme-toggle.tsx     # Dark/Light toggle
+│   │       └── error-boundary.tsx   # Error boundary
+│   ├── hooks/
+│   │   ├── use-chat.ts             # Chat logic (send, regenerate)
+│   │   ├── use-abort.ts            # AbortController management
+│   │   └── use-conversation.ts     # Zustand store + localStorage
+│   ├── lib/
+│   │   ├── ai.ts                   # System prompt + config
+│   │   ├── errors.ts               # Error parsing
+│   │   └── utils.ts                # cn() utility
+│   └── types/
+│       └── chat.ts                 # TypeScript types
+├── .env.example                    # Environment template
+└── package.json
+```
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+## Key Hooks
 
-## Deploy on Vercel
+### `useChat`
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+```typescript
+const { sendMessage, regenerate, stop, loadingState, error } = useChat();
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+// Send a message
+await sendMessage(conversationId, 'Hello AI');
+
+// Regenerate last response
+await regenerate(conversationId);
+
+// Stop current generation
+stop();
+```
+
+### `useConversationStore`
+
+```typescript
+const { conversations, activeId, create, setActive, deleteConversation } = useConversationStore();
+
+// Create new conversation
+const id = create();
+
+// Switch conversation
+setActive(id);
+
+// Delete conversation
+deleteConversation(id);
+```
+
+## Deployment
+
+### Vercel
+
+1. Connect GitHub repo to Vercel
+2. Set environment variable:
+   ```
+   NEXT_PUBLIC_API_URL=https://ai-chat-api.ai-chat-api.workers.dev
+   ```
+3. Deploy
+
+### Environment Variables
+
+| Variable | Description | Default |
+|----------|-------------|---------|
+| `NEXT_PUBLIC_API_URL` | Backend API URL | `http://localhost:8787` |
+
+## License
+
+MIT
