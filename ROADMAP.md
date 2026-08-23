@@ -1,126 +1,136 @@
-# AI Chat UI — Roadmap & Progress
+# Lộ Trình 12 Tháng — AI-Adjacent React Engineer
 
-## Hoàn thành
+Mục tiêu: Từ React dev → AI performance/UX engineer cho sản phẩm AI nghiêm túc.
 
-### Ngày 1 (2026-08-23)
+---
 
-- [x] Scaffold FE (Next.js 16 + shadcn/ui + Zustand + Tailwind)
-- [x] Scaffold BE (Hono + Cloudflare Workers + D1)
-- [x] Streaming chat với Google Gemini API
-- [x] Conversation CRUD + localStorage + D1 sync
-- [x] Feedback (thumbs up/down)
-- [x] Markdown rendering
-- [x] Sources panel + "See reasoning" toggle
-- [x] Theme toggle (dark/light)
-- [x] Edit last message UI
-- [x] Regenerate last response
+## Giai đoạn 1 (Tháng 1-3): AI-Adjacent Baseline
+
+### Kỹ năng trọng tâm
+- [ ] Streaming LLM responses vào React (Vercel AI SDK / SSE)
+- [ ] AbortController, cancel request, retry logic
+- [ ] Conversation state management (user/assistant/system)
+- [ ] 3 loading states: thinking, streaming, loading sources
+- [ ] Structured JSON output từ LLM
+- [ ] Few-shot prompt design cho UI
+
+### Projects
+
+#### Project 1: AI Chat UI ✅
+- [x] Streaming chat với Gemini
+- [x] Conversation CRUD + persistence
+- [x] Sources panel + feedback
 - [x] Deploy FE (Vercel) + BE (Cloudflare)
-- [x] README cho cả 2 repo
-
-### Production URLs
-
-| Service | URL |
-|---------|-----|
-| FE | https://ai-chat-ui-theta.vercel.app |
-| BE | https://ai-chat-api.ai-chat-api.workers.dev |
+- [ ] Streaming SSE (hoàn thiện)
+- [ ] Edit/Regenerate/Stop
+- [ ] Responsive mobile
+- [ ] Keyboard shortcuts
 
 ---
 
-## Tuần 1-2: Hoàn thiện Project 1
+## Giai đoạn 2 (Tháng 4-8): RAG & Agent Orchestration
 
-- [ ] Implement streaming SSE thay vì non-streaming
-- [ ] Edit last message — BE support cho edited messages
-- [ ] Conversation search/filter
-- [ ] Typing indicator animation
-- [ ] Responsive mobile layout
-- [ ] Keyboard shortcuts (Ctrl+Enter, Esc để cancel)
-- [ ] Error boundary per message
-- [ ] Conversation export (JSON/Markdown)
+### Kỹ năng trọng tâm
+- [ ] RAG pipeline: query → embed → retrieve → re-rank → inject → stream
+- [ ] Vector DB (Qdrant/Pinecone/Weaviate)
+- [ ] Surface sources + highlight retrieved chunks
+- [ ] Agent orchestration (multi-step, tool-use)
+- [ ] Multi-turn state + tool results trong UI
+- [ ] Feedback collection (thumbs, report hallucination)
+- [ ] Confidence scores + drill-down
 
----
+#### Project 2: RAG Q&A Visualization
+- [ ] Embed query → retrieve top-k chunks
+- [ ] Stream answer + metadata sources
+- [ ] Sources panel với click → highlight trong tài liệu gốc
+- [ ] Toggle "See reasoning" + retrieved chunks + scores
+- [ ] Feedback loop (thumbs up/down)
 
-## Tuần 3-4: Bắt đầu Project 2 — RAG Q&A
-
-- [ ] Setup vector DB (Qdrant/Pinecone free tier)
-- [ ] Build document ingestion pipeline
-- [ ] Implement RAG: query → embed → retrieve → re-rank → answer
-- [ ] Visualize sources + highlight retrieved chunks
-- [ ] "See reasoning" toggle với actual chunks
-
----
-
-## Tháng 2: RAG Deep Dive
-
-- [ ] Multi-format ingestion (PDF, Markdown, HTML)
-- [ ] Re-ranking retrieved chunks
-- [ ] Source attribution UI (click → open source)
-- [ ] Confidence scores display
-- [ ] Feedback loop (thumbs down → flag hallucination)
-
----
-
-## Tháng 3: Project 3 — Multi-Agent Orchestrator
-
-- [ ] Planner agent (phân tích yêu cầu)
-- [ ] Designer agent (đề xuất layout)
+#### Project 3: Multi-Agent Orchestrator
+- [ ] Planner agent (phân tích yêu cầu, chia task)
+- [ ] Designer agent (đề xuất layout, màu sắc)
 - [ ] Coder agent (sinh code React/HTML/CSS)
-- [ ] Reviewer agent (check accessibility, perf)
-- [ ] Multi-step progress UI
+- [ ] Reviewer agent (check accessibility, performance)
+- [ ] Progress bar multi-step
 - [ ] Timeline log từng agent
 - [ ] Human-in-the-loop (approve/reject)
 
 ---
 
-## Tháng 4-6: Agent Orchestration
+## Giai đoạn 3 (Tháng 9-12): Evaluation, Safety & CI
 
-- [ ] Typed context giữa các agents
-- [ ] Parallel agent execution
-- [ ] State management cho multi-step workflows
-- [ ] Error recovery & retry per agent step
-- [ ] CLI integration (Hermes/OpenCode)
-
----
-
-## Tháng 7-8: Evaluation & Safety
-
-- [ ] Design eval sets cho domain cụ thể
-- [ ] Metrics dashboard (accuracy, latency, cost)
-- [ ] Confidence score distribution
-- [ ] Safety gates (block deploy nếu metrics giảm)
-- [ ] Human-in-the-loop approve/reject deployment
-
----
-
-## Tháng 9-10: Advanced Features
-
+### Kỹ năng trọng tâm
+- [ ] Thiết kế eval set cho domain cụ thể
+- [ ] Đo metrics: correctness, hallucination rate, latency, cost
+- [ ] Gắn eval vào CI/CD
+- [ ] Safety gates: check accessibility, performance, privacy trước deploy
+- [ ] Version model outputs + cache TTL
+- [ ] UI fallback khi model output missing/stale
 - [ ] Graph RAG visualization
-- [ ] Model versioning + cache TTL
-- [ ] CI/CD pipeline cho AI outputs
-- [ ] Performance monitoring dashboard
+
+#### Project 4: AI Dashboard với Eval & Safety Gates
+- [ ] Dashboard hiển thị metrics eval theo thời gian
+- [ ] Distribution confidence scores
+- [ ] Top failure cases (thumbs down, flagged hallucination)
+- [ ] Filter theo model version, prompt variant, date range
+- [ ] Click failure case → xem query, docs, output, feedback
+- [ ] Safety gates: block deploy nếu metrics giảm
+- [ ] Approve/reject deployment (human-in-the-loop)
 
 ---
 
-## Tháng 11-12: Polish & Portfolio
+## Resume Points
 
-- [ ] Case studies cho từng project
-- [ ] Video demo cho portfolio
-- [ ] Blog post về kiến trúc + lessons learned
-- [ ] Open source cleanup + documentation
+### AI-adjacent React Engineer (tháng 1-3)
+> "Built streaming chat UIs with Vercel AI SDK, implementing abort/retry logic and multi-state conversation UX."
+> "Integrated RAG pipelines into React frontends, visualizing sources and retrieved chunks with user feedback loops."
+
+### AI Orchestration & Evaluation (tháng 4-12)
+> "Designed multi-agent workflows for complex tasks (planning, design, code generation) with human-in-the-loop approvals."
+> "Implemented eval dashboards and safety gates to monitor accuracy, latency, and hallucination rates in production."
 
 ---
 
-## Tech Stack Summary
+## Tài nguyên học tập
+
+### Streaming & AI UI
+- Vercel AI SDK docs: https://sdk.vercel.ai
+- Next.js App Router: https://nextjs.org/docs/app
+- React Server Components: https://react.dev/reference/rsc
+
+### RAG
+- LangChain docs: https://docs.langchain.com
+- Pinecone getting started: https://docs.pinecone.io
+- Qdrant docs: https://qdrant.tech/documentation
+
+### Agents
+- OpenAI Assistants API: https://platform.openai.com/docs/assistants
+- Vercel AI SDK agents: https://sdk.vercel.ai/docs/ai-sdk-core/agents
+
+### Evaluation
+- LangSmith evals: https://docs.smith.langchain.com
+- Braintrust: https://www.braintrust.dev
+- OpenAI Evals: https://github.com/openai/evals
+
+---
+
+## Tech Stack
 
 ```
-FE:  Next.js 16 + TypeScript + Tailwind + shadcn/ui + Zustand
-BE:  Hono + Cloudflare Workers + D1 (SQLite)
-AI:  Google Gemini API (free tier)
-DB:  Cloudflare D1 + localStorage
+FE:   Next.js 16 + TypeScript + Tailwind + shadcn/ui + Zustand
+BE:   Hono + Cloudflare Workers + D1
+AI:   Google Gemini → OpenAI → Claude (tùy task)
+DB:   D1 (SQL) + Vector DB (Qdrant/Pinecone)
+Eval: Custom dashboard + CI/CD integration
 ```
 
-## Repos
+---
 
-| Repo | URL |
-|------|-----|
-| FE | https://github.com/zxck5xz/ai-chat-ui |
-| BE | https://github.com/zxck5xz/ai-chat-api |
+## Daily Log
+
+### 2026-08-23 (Ngày 1)
+- Scaffold FE + BE
+- Deploy production
+- Gemini API integration
+- README cho cả 2 repo
+- Lưu roadmap
