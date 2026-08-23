@@ -13,73 +13,10 @@ export function useChat() {
   const { abort, createController, isAborting, handleError } = useAbort();
   const { addMessage, updateMessage, getActive } = useConversationStore();
 
-  const streamResponse = useCallback(
-    async (conversationId: string, assistantMessageId: string, messagesToSend: { role: string; content: string }[]) => {
-      setError(null);
-      setLoadingState({ type: 'thinking' });
-
-      const controller = createController();
-
-      try {
-        const response = await fetch(`${API_URL}/api/messages/chat`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            messages: messagesToSend,
-            conversationId,
-          }),
-          signal: controller.signal,
-        });
-
-        if (!response.ok) {
-          throw new Error(`HTTP ${response.status}: ${response.statusText}`);
-        }
-
-        const reader = response.body?.getReader();
-        if (!reader) throw new Error('No response body');
-
-        const decoder = new TextDecoder();
-        let fullContent = '';
-
-        setLoadingState({ type: 'streaming', tokens: '' });
-
-        while (true) {
-          const { done, value } = await reader.read();
-          if (done) break;
-
-          const chunk = decoder.decode(value, { stream: true });
-
-          // Check for sources marker
-          const sourcesMatch = chunk.match(/\[SOURCES\]([\s\S]*?)\[\/SOURCES\]/);
-          if (sourcesMatch) {
-            const sourcesJson = sourcesMatch[1];
-            try {
-              const sources = JSON.parse(sourcesJson);
-              updateMessage(conversationId, assistantMessageId, { sources });
-            } catch {
-              // Skip malformed sources
-            }
-          } else {
-            fullContent += chunk;
-            setLoadingState({ type: 'streaming', tokens: fullContent });
-            updateMessage(conversationId, assistantMessageId, { content: fullContent });
-          }
-        }
-
-        setLoadingState({ type: 'idle' });
-      } catch (err) {
-        const chatError = handleError(err);
-        if (chatError.type !== 'abort') {
-          setError(chatError);
-        }
-        setLoadingState({ type: 'idle' });
-      }
-    },
-    [createController, handleError, updateMessage]
-  );
-
   const sendMessage = useCallback(
     async (conversationId: string, content: string) => {
+      setError(null);
+
       const userMessage: ChatMessage = {
         id: crypto.randomUUID(),
         role: 'user',
@@ -95,12 +32,59 @@ export function useChat() {
         createdAt: new Date(),
       };
       addMessage(conversationId, assistantMessage);
+      setLoadingState({ type: 'thinking' });
 
-      await streamResponse(conversationId, assistantMessage.id, [
-        { role: 'user', content },
-      ]);
+      const controller = createController();
+
+      try {
+        const response = await fetch(`${API_URL}/api/messages/chat`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            messages: [{ role: 'user', content }],
+            conversationId,
+          }),
+          signal: controller.signal,
+        });
+
+        if (!response.ok) {
+          const errBody = await response.json().catch(() => ({}));
+          throw new Error(errBody.message || `HTTP ${response.status}`);
+        }
+
+        const data = await response.json();
+
+        // Parse content - may contain JSON with answer/sources
+        let answer = data.content || '';
+        let sources = data.sources || [];
+
+        // Try to parse structured JSON from answer
+        try {
+          const jsonMatch = answer.match(/\{[\s\S]*\}/);
+          if (jsonMatch) {
+            const parsed = JSON.parse(jsonMatch[0]);
+            if (parsed.answer) answer = parsed.answer;
+            if (parsed.sources?.length) sources = parsed.sources;
+          }
+        } catch {
+          // Use raw text if JSON parse fails
+        }
+
+        setLoadingState({ type: 'streaming', tokens: answer });
+        updateMessage(conversationId, assistantMessage.id, {
+          content: answer,
+          sources,
+        });
+        setLoadingState({ type: 'idle' });
+      } catch (err) {
+        const chatError = handleError(err);
+        if (chatError.type !== 'abort') {
+          setError(chatError);
+        }
+        setLoadingState({ type: 'idle' });
+      }
     },
-    [addMessage, streamResponse]
+    [addMessage, updateMessage, createController, handleError]
   );
 
   const regenerate = useCallback(
@@ -113,7 +97,11 @@ export function useChat() {
 
       if (lastAssistantIndex === -1) return;
 
-      // Create new assistant message
+      const userMessages = messages
+        .slice(0, lastAssistantIndex)
+        .filter((m) => m.role === 'user')
+        .map((m) => ({ role: 'user' as const, content: m.content }));
+
       const assistantMessage: ChatMessage = {
         id: crypto.randomUUID(),
         role: 'assistant',
@@ -121,16 +109,53 @@ export function useChat() {
         createdAt: new Date(),
       };
       addMessage(conversationId, assistantMessage);
+      setLoadingState({ type: 'thinking' });
 
-      // Send all messages up to last user message
-      const messagesToSend = messages
-        .slice(0, lastAssistantIndex)
-        .filter((m) => m.role === 'user' || m.role === 'assistant')
-        .map((m) => ({ role: m.role, content: m.content }));
+      const controller = createController();
 
-      await streamResponse(conversationId, assistantMessage.id, messagesToSend);
+      try {
+        const response = await fetch(`${API_URL}/api/messages/chat`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            messages: userMessages,
+            conversationId,
+          }),
+          signal: controller.signal,
+        });
+
+        if (!response.ok) throw new Error(`HTTP ${response.status}`);
+
+        const data = await response.json();
+
+        let answer = data.content || '';
+        let sources = data.sources || [];
+
+        try {
+          const jsonMatch = answer.match(/\{[\s\S]*\}/);
+          if (jsonMatch) {
+            const parsed = JSON.parse(jsonMatch[0]);
+            if (parsed.answer) answer = parsed.answer;
+            if (parsed.sources?.length) sources = parsed.sources;
+          }
+        } catch {
+          // Use raw text
+        }
+
+        updateMessage(conversationId, assistantMessage.id, {
+          content: answer,
+          sources,
+        });
+        setLoadingState({ type: 'idle' });
+      } catch (err) {
+        const chatError = handleError(err);
+        if (chatError.type !== 'abort') {
+          setError(chatError);
+        }
+        setLoadingState({ type: 'idle' });
+      }
     },
-    [getActive, addMessage, streamResponse]
+    [getActive, addMessage, createController, handleError, updateMessage]
   );
 
   const stop = useCallback(() => {
