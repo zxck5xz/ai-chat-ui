@@ -1,17 +1,17 @@
 'use client';
 
 import { useEffect, useRef } from 'react';
-import type { ChatMessage } from '@/types/chat';
+import type { ChatMessage, LoadingState } from '@/types/chat';
 import { MessageBubble } from './message-bubble';
 import { LoadingStates } from './loading-states';
-import type { LoadingState } from '@/types/chat';
 
 interface MessageListProps {
   messages: ChatMessage[];
   loadingState: LoadingState;
+  conversationId: string | null;
 }
 
-export function MessageList({ messages, loadingState }: MessageListProps) {
+export function MessageList({ messages, loadingState, conversationId }: MessageListProps) {
   const bottomRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -30,7 +30,11 @@ export function MessageList({ messages, loadingState }: MessageListProps) {
           </div>
         )}
         {messages.map((message) => (
-          <MessageBubble key={message.id} message={message} />
+          <MessageBubble
+            key={message.id}
+            message={message}
+            conversationId={conversationId ?? ''}
+          />
         ))}
         <LoadingStates state={loadingState} />
         <div ref={bottomRef} />

@@ -6,11 +6,17 @@ export interface Source {
   score: number;
 }
 
+export interface Feedback {
+  rating: 'positive' | 'negative' | null;
+  comment?: string;
+}
+
 export interface ChatMessage {
   id: string;
   role: 'user' | 'assistant' | 'system';
   content: string;
   sources?: Source[];
+  feedback?: Feedback;
   createdAt: Date;
 }
 

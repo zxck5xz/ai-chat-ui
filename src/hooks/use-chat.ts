@@ -5,41 +5,28 @@ import type { ChatMessage, LoadingState, ChatError } from '@/types/chat';
 import { useConversationStore } from './use-conversation';
 import { useAbort } from './use-abort';
 
+const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8787';
+
 export function useChat() {
   const [loadingState, setLoadingState] = useState<LoadingState>({ type: 'idle' });
   const [error, setError] = useState<ChatError | null>(null);
   const { abort, createController, isAborting, handleError } = useAbort();
-  const { addMessage, updateMessage } = useConversationStore();
+  const { addMessage, updateMessage, getActive } = useConversationStore();
 
-  const sendMessage = useCallback(
-    async (conversationId: string, content: string) => {
+  const streamResponse = useCallback(
+    async (conversationId: string, assistantMessageId: string, messagesToSend: { role: string; content: string }[]) => {
       setError(null);
-
-      const userMessage: ChatMessage = {
-        id: crypto.randomUUID(),
-        role: 'user',
-        content,
-        createdAt: new Date(),
-      };
-      addMessage(conversationId, userMessage);
-
-      const assistantMessage: ChatMessage = {
-        id: crypto.randomUUID(),
-        role: 'assistant',
-        content: '',
-        createdAt: new Date(),
-      };
-      addMessage(conversationId, assistantMessage);
       setLoadingState({ type: 'thinking' });
 
       const controller = createController();
 
       try {
-        const response = await fetch('/api/chat', {
+        const response = await fetch(`${API_URL}/api/messages/chat`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
-            messages: [{ role: 'user', content }],
+            messages: messagesToSend,
+            conversationId,
           }),
           signal: controller.signal,
         });
@@ -61,9 +48,22 @@ export function useChat() {
           if (done) break;
 
           const chunk = decoder.decode(value, { stream: true });
-          fullContent += chunk;
-          setLoadingState({ type: 'streaming', tokens: fullContent });
-          updateMessage(conversationId, assistantMessage.id, { content: fullContent });
+
+          // Check for sources marker
+          const sourcesMatch = chunk.match(/\[SOURCES\]([\s\S]*?)\[\/SOURCES\]/);
+          if (sourcesMatch) {
+            const sourcesJson = sourcesMatch[1];
+            try {
+              const sources = JSON.parse(sourcesJson);
+              updateMessage(conversationId, assistantMessageId, { sources });
+            } catch {
+              // Skip malformed sources
+            }
+          } else {
+            fullContent += chunk;
+            setLoadingState({ type: 'streaming', tokens: fullContent });
+            updateMessage(conversationId, assistantMessageId, { content: fullContent });
+          }
         }
 
         setLoadingState({ type: 'idle' });
@@ -75,7 +75,62 @@ export function useChat() {
         setLoadingState({ type: 'idle' });
       }
     },
-    [addMessage, updateMessage, createController, handleError]
+    [createController, handleError, updateMessage]
+  );
+
+  const sendMessage = useCallback(
+    async (conversationId: string, content: string) => {
+      const userMessage: ChatMessage = {
+        id: crypto.randomUUID(),
+        role: 'user',
+        content,
+        createdAt: new Date(),
+      };
+      addMessage(conversationId, userMessage);
+
+      const assistantMessage: ChatMessage = {
+        id: crypto.randomUUID(),
+        role: 'assistant',
+        content: '',
+        createdAt: new Date(),
+      };
+      addMessage(conversationId, assistantMessage);
+
+      await streamResponse(conversationId, assistantMessage.id, [
+        { role: 'user', content },
+      ]);
+    },
+    [addMessage, streamResponse]
+  );
+
+  const regenerate = useCallback(
+    async (conversationId: string) => {
+      const conversation = getActive();
+      if (!conversation) return;
+
+      const messages = conversation.messages;
+      const lastAssistantIndex = messages.findLastIndex((m) => m.role === 'assistant');
+
+      if (lastAssistantIndex === -1) return;
+
+      // Create new assistant message
+      const assistantMessage: ChatMessage = {
+        id: crypto.randomUUID(),
+        role: 'assistant',
+        content: '',
+        createdAt: new Date(),
+      };
+      addMessage(conversationId, assistantMessage);
+
+      // Send all messages up to last user message
+      const messagesToSend = messages
+        .slice(0, lastAssistantIndex)
+        .filter((m) => m.role === 'user' || m.role === 'assistant')
+        .map((m) => ({ role: m.role, content: m.content }));
+
+      await streamResponse(conversationId, assistantMessage.id, messagesToSend);
+    },
+    [getActive, addMessage, streamResponse]
   );
 
   const stop = useCallback(() => {
@@ -83,5 +138,5 @@ export function useChat() {
     setLoadingState({ type: 'idle' });
   }, [abort]);
 
-  return { sendMessage, stop, loadingState, error, isAborting };
+  return { sendMessage, regenerate, stop, loadingState, error, isAborting };
 }
