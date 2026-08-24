@@ -2,20 +2,22 @@
 
 import { useChat } from '@/hooks/use-chat';
 import { useConversationStore } from '@/hooks/use-conversation';
+import { useKeyboardShortcuts } from '@/hooks/use-keyboard-shortcuts';
 import { MessageList } from './message-list';
 import { ChatInput } from './chat-input';
 import { Button } from '@/components/ui/button';
 import { Plus, MessageSquare, Trash2, RefreshCw, Menu, X } from 'lucide-react';
-import { useEffect, useCallback, useState } from 'react';
+import { useEffect, useCallback, useState, useRef, useMemo } from 'react';
 
 export function ChatInterface() {
   const { conversations, activeId, create, setActive, deleteConversation, init } =
     useConversationStore();
   const { sendMessage, regenerate, stop, loadingState, error } = useChat();
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+  const inputRef = useRef<HTMLTextAreaElement>(null);
 
   const activeConversation = conversations.find((c) => c.id === activeId);
-  const messages = activeConversation?.messages ?? [];
+  const messages = useMemo(() => activeConversation?.messages ?? [], [activeConversation]);
 
   useEffect(() => {
     init();
@@ -27,14 +29,17 @@ export function ChatInterface() {
     }
   }, [activeId, conversations.length, create]);
 
-  const handleSend = useCallback((content: string) => {
-    if (!activeId) {
-      const id = create();
-      sendMessage(id, content);
-    } else {
-      sendMessage(activeId, content);
-    }
-  }, [activeId, create, sendMessage]);
+  const handleSend = useCallback(
+    (content: string) => {
+      if (!activeId) {
+        const id = create();
+        sendMessage(id, content);
+      } else {
+        sendMessage(activeId, content);
+      }
+    },
+    [activeId, create, sendMessage]
+  );
 
   const handleRegenerate = useCallback(() => {
     if (activeId) {
@@ -42,44 +47,76 @@ export function ChatInterface() {
     }
   }, [activeId, regenerate]);
 
-  const handleEdit = useCallback((messageId: string, newContent: string) => {
-    if (!activeId) return;
+  const handleEdit = useCallback(
+    (messageId: string, newContent: string) => {
+      if (!activeId) return;
 
-    const conversation = conversations.find((c) => c.id === activeId);
-    if (!conversation) return;
+      const conversation = conversations.find((c) => c.id === activeId);
+      if (!conversation) return;
 
-    const messageIndex = conversation.messages.findIndex((m) => m.id === messageId);
-    if (messageIndex === -1) return;
+      const messageIndex = conversation.messages.findIndex((m) => m.id === messageId);
+      if (messageIndex === -1) return;
 
-    // Get all user messages up to this point (excluding the edited one)
-    const userMessages = conversation.messages
-      .slice(0, messageIndex)
-      .filter((m) => m.role === 'user')
-      .map((m) => ({ role: 'user' as const, content: m.content }));
+      // Get all user messages up to this point (excluding the edited one)
+      const userMessages = conversation.messages
+        .slice(0, messageIndex)
+        .filter((m) => m.role === 'user')
+        .map((m) => ({ role: 'user' as const, content: m.content }));
 
-    // Add the edited message
-    userMessages.push({ role: 'user', content: newContent });
+      // Add the edited message
+      userMessages.push({ role: 'user', content: newContent });
 
-    // Remove this message and all messages after it
-    const { updateMessage, removeMessages } = useConversationStore.getState();
-    
-    // Remove messages after the edited one (assistant response + any following)
-    const messagesToRemove = conversation.messages.slice(messageIndex + 1);
-    for (const msg of messagesToRemove) {
-      removeMessages(activeId, [msg.id]);
-    }
+      // Remove this message and all messages after it
+      const { updateMessage, removeMessages } = useConversationStore.getState();
 
-    // Update the edited message
-    updateMessage(activeId, messageId, { content: newContent });
+      // Remove messages after the edited one (assistant response + any following)
+      const messagesToRemove = conversation.messages.slice(messageIndex + 1);
+      for (const msg of messagesToRemove) {
+        removeMessages(activeId, [msg.id]);
+      }
 
-    // Resend with new context
-    sendMessage(activeId, newContent);
-  }, [activeId, conversations, sendMessage]);
+      // Update the edited message
+      updateMessage(activeId, messageId, { content: newContent });
 
-  const handleSelectConversation = useCallback((id: string) => {
-    setActive(id);
+      // Resend with new context
+      sendMessage(activeId, newContent);
+    },
+    [activeId, conversations, sendMessage]
+  );
+
+  const handleSelectConversation = useCallback(
+    (id: string) => {
+      setActive(id);
+      setIsSidebarOpen(false);
+    },
+    [setActive]
+  );
+
+  const handleFocusInput = useCallback(() => {
+    inputRef.current?.focus();
+  }, []);
+
+  const handleNewChat = useCallback(() => {
+    create();
     setIsSidebarOpen(false);
-  }, [setActive]);
+  }, [create]);
+
+  const handleEditLastMessage = useCallback(() => {
+    const lastUserMessage = [...messages].reverse().find((m) => m.role === 'user');
+    if (lastUserMessage && activeId) {
+      handleEdit(lastUserMessage.id, lastUserMessage.content);
+    }
+  }, [messages, activeId, handleEdit]);
+
+  useKeyboardShortcuts({
+    onFocusInput: handleFocusInput,
+    onNewChat: handleNewChat,
+    onStopStreaming: stop,
+    onCloseSidebar: () => setIsSidebarOpen(false),
+    onEditLastMessage: handleEditLastMessage,
+    isStreaming: loadingState.type !== 'idle',
+    isSidebarOpen,
+  });
 
   return (
     <div className="flex h-screen bg-background">
@@ -145,11 +182,7 @@ export function ChatInterface() {
       <div className="flex-1 flex flex-col min-w-0">
         {/* Mobile header */}
         <div className="flex items-center gap-2 p-2 border-b md:hidden">
-          <Button
-            variant="ghost"
-            size="icon"
-            onClick={() => setIsSidebarOpen(true)}
-          >
+          <Button variant="ghost" size="icon" onClick={() => setIsSidebarOpen(true)}>
             <Menu className="h-5 w-5" />
           </Button>
           <span className="font-medium truncate">{activeConversation?.title || 'New Chat'}</span>
@@ -159,7 +192,12 @@ export function ChatInterface() {
           <div className="p-4 bg-destructive/10 text-destructive text-sm flex items-center justify-between">
             <span className="truncate">{error.message}</span>
             {error.retryable && (
-              <Button size="sm" variant="outline" onClick={handleRegenerate} className="shrink-0 ml-2">
+              <Button
+                size="sm"
+                variant="outline"
+                onClick={handleRegenerate}
+                className="shrink-0 ml-2"
+              >
                 <RefreshCw className="h-3 w-3 mr-1" />
                 Retry
               </Button>
@@ -173,11 +211,7 @@ export function ChatInterface() {
           onEdit={handleEdit}
           onRegenerate={handleRegenerate}
         />
-        <ChatInput
-          onSend={handleSend}
-          onStop={stop}
-          isLoading={loadingState.type !== 'idle'}
-        />
+        <ChatInput onSend={handleSend} onStop={stop} isLoading={loadingState.type !== 'idle'} />
       </div>
     </div>
   );
