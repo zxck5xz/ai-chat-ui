@@ -6,7 +6,7 @@ import { MessageList } from './message-list';
 import { ChatInput } from './chat-input';
 import { Button } from '@/components/ui/button';
 import { Plus, MessageSquare, Trash2, RefreshCw } from 'lucide-react';
-import { useEffect } from 'react';
+import { useEffect, useCallback } from 'react';
 
 export function ChatInterface() {
   const { conversations, activeId, create, setActive, deleteConversation, init } =
@@ -26,20 +26,54 @@ export function ChatInterface() {
     }
   }, [activeId, conversations.length, create]);
 
-  const handleSend = (content: string) => {
+  const handleSend = useCallback((content: string) => {
     if (!activeId) {
       const id = create();
       sendMessage(id, content);
     } else {
       sendMessage(activeId, content);
     }
-  };
+  }, [activeId, create, sendMessage]);
 
-  const handleRegenerate = () => {
+  const handleRegenerate = useCallback(() => {
     if (activeId) {
       regenerate(activeId);
     }
-  };
+  }, [activeId, regenerate]);
+
+  const handleEdit = useCallback((messageId: string, newContent: string) => {
+    if (!activeId) return;
+
+    const conversation = conversations.find((c) => c.id === activeId);
+    if (!conversation) return;
+
+    const messageIndex = conversation.messages.findIndex((m) => m.id === messageId);
+    if (messageIndex === -1) return;
+
+    // Get all user messages up to this point (excluding the edited one)
+    const userMessages = conversation.messages
+      .slice(0, messageIndex)
+      .filter((m) => m.role === 'user')
+      .map((m) => ({ role: 'user' as const, content: m.content }));
+
+    // Add the edited message
+    userMessages.push({ role: 'user', content: newContent });
+
+    // Remove this message and all messages after it
+    const { updateMessage, removeMessages } = useConversationStore.getState();
+    
+    // Remove messages after the edited one (assistant response + any following)
+    const messagesToRemove = conversation.messages.slice(messageIndex + 1);
+    for (const msg of messagesToRemove) {
+      removeMessages(activeId, [msg.id]);
+    }
+
+    // Update the edited message
+    updateMessage(activeId, messageId, { content: newContent });
+
+    // Resend with new context
+    sendMessage(activeId, newContent);
+  }, [activeId, conversations, sendMessage]);
 
   return (
     <div className="flex h-screen">
@@ -96,6 +130,8 @@ export function ChatInterface() {
           messages={messages}
           loadingState={loadingState}
           conversationId={activeId}
+          onEdit={handleEdit}
+          onRegenerate={handleRegenerate}
         />
         <ChatInput
           onSend={handleSend}

@@ -42,6 +42,7 @@ interface ConversationStore {
   setActive: (id: string) => void;
   addMessage: (conversationId: string, message: ChatMessage) => void;
   updateMessage: (conversationId: string, messageId: string, updates: Partial<ChatMessage>) => void;
+  removeMessages: (conversationId: string, messageIds: string[]) => void;
   deleteConversation: (id: string) => void;
   getActive: () => Conversation | undefined;
   init: () => void;
@@ -142,6 +143,20 @@ export const useConversationStore = create<ConversationStore>((set, get) => ({
               messages: conv.messages.map((msg) =>
                 msg.id === messageId ? { ...msg, ...updates } : msg
               ),
+            }
+          : conv
+      );
+      saveConversations(updated);
+      return { conversations: updated };
+    }),
+
+  removeMessages: (conversationId, messageIds) =>
+    set((state) => {
+      const updated = state.conversations.map((conv) =>
+        conv.id === conversationId
+          ? {
+              ...conv,
+              messages: conv.messages.filter((msg) => !messageIds.includes(msg.id)),
             }
           : conv
       );
