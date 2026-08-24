@@ -1,11 +1,19 @@
 'use client';
 
 import { useCallback, useState } from 'react';
-import type { ChatMessage, LoadingState, ChatError } from '@/types/chat';
+import type { ChatMessage, LoadingState, ChatError, Source } from '@/types/chat';
 import { useConversationStore } from './use-conversation';
 import { useAbort } from './use-abort';
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8787';
+
+// Parse SSE line
+function parseSSELine(line: string): string | null {
+  if (line.startsWith('data: ')) {
+    return line.slice(6);
+  }
+  return null;
+}
 
 export function useChat() {
   const [loadingState, setLoadingState] = useState<LoadingState>({ type: 'idle' });
@@ -52,27 +60,102 @@ export function useChat() {
           throw new Error(errBody.message || `HTTP ${response.status}`);
         }
 
-        const data = await response.json();
+        // Check if response is SSE stream
+        const contentType = response.headers.get('content-type') || '';
+        const isSSE = contentType.includes('text/event-stream');
 
-        // Parse content - may contain JSON with answer/sources
-        let answer = data.content || '';
-        let sources = data.sources || [];
+        if (!isSSE) {
+          // Fallback: non-streaming response
+          const data = await response.json();
+          let answer = data.content || '';
+          let sources = data.sources || [];
 
-        // Try to parse structured JSON from answer
-        try {
-          const jsonMatch = answer.match(/\{[\s\S]*\}/);
-          if (jsonMatch) {
-            const parsed = JSON.parse(jsonMatch[0]);
-            if (parsed.answer) answer = parsed.answer;
-            if (parsed.sources?.length) sources = parsed.sources;
+          try {
+            const jsonMatch = answer.match(/\{[\s\S]*\}/);
+            if (jsonMatch) {
+              const parsed = JSON.parse(jsonMatch[0]);
+              if (parsed.answer) answer = parsed.answer;
+              if (parsed.sources?.length) sources = parsed.sources;
+            }
+          } catch {
+            // Use raw text
           }
-        } catch {
-          // Use raw text if JSON parse fails
+
+          setLoadingState({ type: 'streaming', tokens: answer });
+          updateMessage(conversationId, assistantMessage.id, {
+            content: answer,
+            sources,
+          });
+          setLoadingState({ type: 'idle' });
+          return;
         }
 
-        setLoadingState({ type: 'streaming', tokens: answer });
+        // SSE streaming
+        setLoadingState({ type: 'streaming', tokens: '' });
+        let fullContent = '';
+        let sources: Source[] = [];
+
+        const reader = response.body?.getReader();
+        const decoder = new TextDecoder();
+        let buffer = '';
+
+        if (!reader) {
+          throw new Error('No readable stream');
+        }
+
+        while (true) {
+          const { done, value } = await reader.read();
+          if (done) break;
+
+          buffer += decoder.decode(value, { stream: true });
+          const lines = buffer.split('\n');
+          buffer = lines.pop() || '';
+
+          for (const line of lines) {
+            const trimmed = line.trim();
+            if (!trimmed) continue;
+
+            const data = parseSSELine(trimmed);
+            if (!data) continue;
+
+            if (data === '[DONE]') {
+              break;
+            }
+
+            try {
+              const parsed = JSON.parse(data);
+
+              switch (parsed.type) {
+                case 'start':
+                  console.log('Stream started with model:', parsed.model);
+                  break;
+
+                case 'token':
+                  fullContent += parsed.content;
+                  updateMessage(conversationId, assistantMessage.id, {
+                    content: fullContent,
+                  });
+                  setLoadingState({ type: 'streaming', tokens: fullContent });
+                  break;
+
+                case 'sources':
+                  sources = parsed.sources || [];
+                  break;
+
+                case 'error':
+                  throw new Error(parsed.message);
+              }
+            } catch (e) {
+              if (e instanceof Error && e.message !== 'Unexpected end of JSON input') {
+                throw e;
+              }
+            }
+          }
+        }
+
+        // Final update with sources
         updateMessage(conversationId, assistantMessage.id, {
-          content: answer,
+          content: fullContent,
           sources,
         });
         setLoadingState({ type: 'idle' });
@@ -126,24 +209,99 @@ export function useChat() {
 
         if (!response.ok) throw new Error(`HTTP ${response.status}`);
 
-        const data = await response.json();
+        // Check if response is SSE stream
+        const contentType = response.headers.get('content-type') || '';
+        const isSSE = contentType.includes('text/event-stream');
 
-        let answer = data.content || '';
-        let sources = data.sources || [];
+        if (!isSSE) {
+          const data = await response.json();
+          let answer = data.content || '';
+          let sources = data.sources || [];
 
-        try {
-          const jsonMatch = answer.match(/\{[\s\S]*\}/);
-          if (jsonMatch) {
-            const parsed = JSON.parse(jsonMatch[0]);
-            if (parsed.answer) answer = parsed.answer;
-            if (parsed.sources?.length) sources = parsed.sources;
+          try {
+            const jsonMatch = answer.match(/\{[\s\S]*\}/);
+            if (jsonMatch) {
+              const parsed = JSON.parse(jsonMatch[0]);
+              if (parsed.answer) answer = parsed.answer;
+              if (parsed.sources?.length) sources = parsed.sources;
+            }
+          } catch {
+            // Use raw text
           }
-        } catch {
-          // Use raw text
+
+          updateMessage(conversationId, assistantMessage.id, {
+            content: answer,
+            sources,
+          });
+          setLoadingState({ type: 'idle' });
+          return;
+        }
+
+        // SSE streaming
+        setLoadingState({ type: 'streaming', tokens: '' });
+        let fullContent = '';
+        let sources: Source[] = [];
+
+        const reader = response.body?.getReader();
+        const decoder = new TextDecoder();
+        let buffer = '';
+
+        if (!reader) {
+          throw new Error('No readable stream');
+        }
+
+        while (true) {
+          const { done, value } = await reader.read();
+          if (done) break;
+
+          buffer += decoder.decode(value, { stream: true });
+          const lines = buffer.split('\n');
+          buffer = lines.pop() || '';
+
+          for (const line of lines) {
+            const trimmed = line.trim();
+            if (!trimmed) continue;
+
+            const data = parseSSELine(trimmed);
+            if (!data) continue;
+
+            if (data === '[DONE]') {
+              break;
+            }
+
+            try {
+              const parsed = JSON.parse(data);
+
+              switch (parsed.type) {
+                case 'start':
+                  console.log('Stream started with model:', parsed.model);
+                  break;
+
+                case 'token':
+                  fullContent += parsed.content;
+                  updateMessage(conversationId, assistantMessage.id, {
+                    content: fullContent,
+                  });
+                  setLoadingState({ type: 'streaming', tokens: fullContent });
+                  break;
+
+                case 'sources':
+                  sources = parsed.sources || [];
+                  break;
+
+                case 'error':
+                  throw new Error(parsed.message);
+              }
+            } catch (e) {
+              if (e instanceof Error && e.message !== 'Unexpected end of JSON input') {
+                throw e;
+              }
+            }
+          }
         }
 
         updateMessage(conversationId, assistantMessage.id, {
-          content: answer,
+          content: fullContent,
           sources,
         });
         setLoadingState({ type: 'idle' });
