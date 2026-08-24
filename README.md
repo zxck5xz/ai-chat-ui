@@ -2,30 +2,64 @@
 
 Frontend cho AI Chat — built với **Next.js 16** + **TypeScript** + **Tailwind CSS** + **shadcn/ui**.
 
+[![Next.js](https://img.shields.io/badge/Next.js-16-black?style=flat-square&logo=next.js)](https://nextjs.org/)
+[![TypeScript](https://img.shields.io/badge/TypeScript-5.x-3178C6?style=flat-square&logo=typescript)](https://www.typescriptlang.org/)
+[![Tailwind CSS](https://img.shields.io/badge/Tailwind_CSS-4-06B6D4?style=flat-square&logo=tailwindcss)](https://tailwindcss.com/)
+[![License: MIT](https://img.shields.io/badge/License-MIT-green.svg?style=flat-square)](https://opensource.org/licenses/MIT)
+
 ## Live Demo
 
-🔗 https://ai-chat-ui-theta.vercel.app
+🔗 **https://ai-chat-ui-theta.vercel.app**
+
+## Status
+
+| Feature                    | Status         |
+| -------------------------- | -------------- |
+| Streaming AI Chat          | ✅ Done        |
+| Conversation CRUD          | ✅ Done        |
+| Source Citations           | ✅ Done        |
+| Feedback System            | ✅ Done        |
+| Dark/Light Mode            | ✅ Done        |
+| Deploy FE + BE             | ✅ Done        |
+| SSE Streaming Optimization | 🔄 In Progress |
+| Edit/Regenerate/Stop       | 📋 Todo        |
+| Mobile Responsive          | 📋 Todo        |
+| Keyboard Shortcuts         | 📋 Todo        |
 
 ## Tech Stack
 
-| Layer | Technology | Purpose |
-|-------|-----------|---------|
-| Framework | Next.js 16 (App Router) | React framework |
-| Language | TypeScript 5.x | Type safety |
-| Styling | Tailwind CSS 4 | Utility-first CSS |
-| Components | shadcn/ui | Pre-built UI primitives |
-| State | Zustand | Conversation management |
-| Icons | Lucide React | Icon library |
-| AI | Google Gemini (via BE) | LLM inference |
+| Layer      | Technology              | Purpose                 |
+| ---------- | ----------------------- | ----------------------- |
+| Framework  | Next.js 16 (App Router) | React framework         |
+| Language   | TypeScript 5.x          | Type safety             |
+| Styling    | Tailwind CSS 4          | Utility-first CSS       |
+| Components | shadcn/ui               | Pre-built UI primitives |
+| State      | Zustand                 | Conversation management |
+| Icons      | Lucide React            | Icon library            |
+| AI         | Google Gemini (via BE)  | LLM inference           |
 
 ## Architecture
 
 ```
-Next.js (Vercel)
-      ↓
-Cloudflare Workers (Hono)
-      ├── D1 Database (conversations, messages)
-      └── Google Gemini API (AI responses)
+┌─────────────────────────────────────────────────────────┐
+│                    Next.js (Vercel)                     │
+│                                                         │
+│  ┌─────────────┐  ┌─────────────┐  ┌─────────────┐    │
+│  │ Chat UI     │  │ Conversation│  │ Sources     │    │
+│  │ (Streaming) │  │ Manager     │  │ Panel       │    │
+│  └─────────────┘  └─────────────┘  └─────────────┘    │
+│                       │                                 │
+└───────────────────────┼─────────────────────────────────┘
+                        │
+                        ▼
+┌─────────────────────────────────────────────────────────┐
+│              Cloudflare Workers (Hono)                  │
+│                                                         │
+│  ┌─────────────┐  ┌─────────────┐  ┌─────────────┐    │
+│  │ API Routes  │  │ D1 Database │  │ Gemini API  │    │
+│  │             │  │ (Messages)  │  │ (AI)        │    │
+│  └─────────────┘  └─────────────┘  └─────────────┘    │
+└─────────────────────────────────────────────────────────┘
 ```
 
 ## Features
@@ -38,13 +72,11 @@ Cloudflare Workers (Hono)
 - **See Reasoning**: Toggle to view retrieved chunks
 - **Feedback System**: Thumbs up/down on assistant messages
 - **Copy Message**: One-click copy for AI responses
-- **Edit Last Message**: Modify and resend last user message
-- **Regenerate**: Re-generate last AI response
 - **Dark/Light Mode**: Theme toggle with system preference
 - **Error Handling**: Retry logic with user-friendly messages
 - **Responsive Design**: Works on desktop and mobile
 
-## Setup
+## Getting Started
 
 ### Prerequisites
 
@@ -54,14 +86,20 @@ Cloudflare Workers (Hono)
 ### Installation
 
 ```bash
+# Clone the repository
+git clone https://github.com/zxck5xz/ai-chat-ui.git
+
+# Navigate to project directory
+cd ai-chat-ui
+
+# Install dependencies
 npm install
+
+# Copy environment variables
+cp .env.example .env.local
 ```
 
 ### Environment Variables
-
-```bash
-cp .env.example .env.local
-```
 
 Edit `.env.local`:
 
@@ -126,6 +164,9 @@ ai-chat-ui/
 │   └── types/
 │       └── chat.ts                 # TypeScript types
 ├── .env.example                    # Environment template
+├── components.json                 # shadcn/ui config
+├── next.config.ts                  # Next.js config
+├── tailwind.config.ts              # Tailwind config
 └── package.json
 ```
 
@@ -161,23 +202,69 @@ setActive(id);
 deleteConversation(id);
 ```
 
-## Deployment
+## API Reference
 
-### Vercel
+### Send Message
 
-1. Connect GitHub repo to Vercel
-2. Set environment variable:
-   ```
-   NEXT_PUBLIC_API_URL=https://ai-chat-api.ai-chat-api.workers.dev
-   ```
-3. Deploy
+```typescript
+POST /api/chat
+Content-Type: application/json
 
-### Environment Variables
+{
+  "conversationId": "string",
+  "message": "string"
+}
+```
 
-| Variable | Description | Default |
-|----------|-------------|---------|
-| `NEXT_PUBLIC_API_URL` | Backend API URL | `http://localhost:8787` |
+### Response (Streaming)
+
+```typescript
+// SSE stream with token-by-token responses
+data: {"type": "token", "content": "Hello"}
+data: {"type": "token", "content": ", how"}
+data: {"type": "done"}
+```
+
+## Roadmap
+
+### Phase 1: AI-Adjacent Baseline ✅
+
+- [x] Streaming chat với Gemini
+- [x] Conversation CRUD + persistence
+- [x] Sources panel + feedback
+- [x] Deploy FE (Vercel) + BE (Cloudflare)
+- [ ] Streaming SSE optimization
+- [ ] Edit/Regenerate/Stop
+- [ ] Mobile responsive
+- [ ] Keyboard shortcuts
+
+### Phase 2: RAG & Agent Orchestration (Planned)
+
+- [ ] RAG pipeline integration
+- [ ] Vector DB (Qdrant/Pinecone)
+- [ ] Agent orchestration (multi-step)
+- [ ] Human-in-the-loop approvals
+
+### Phase 3: Evaluation & Safety (Planned)
+
+- [ ] Eval dashboard
+- [ ] Safety gates
+- [ ] CI/CD integration
+
+## Contributing
+
+1. Fork the repository
+2. Create your feature branch (`git checkout -b feature/amazing-feature`)
+3. Commit your changes (`git commit -m 'Add some amazing feature'`)
+4. Push to the branch (`git push origin feature/amazing-feature`)
+5. Open a Pull Request
 
 ## License
 
-MIT
+Distributed under the MIT License. See `LICENSE` for more information.
+
+## Contact
+
+**Do Tuong Van** — tuongvan92@gmail.com
+
+Project Link: [https://github.com/zxck5xz/ai-chat-ui](https://github.com/zxck5xz/ai-chat-ui)
