@@ -321,5 +321,124 @@ export function useChat() {
     setLoadingState({ type: 'idle' });
   }, [abort]);
 
-  return { sendMessage, regenerate, stop, loadingState, error, isAborting };
+  const sendRAGQuery = useCallback(
+    async (conversationId: string, query: string) => {
+      setError(null);
+
+      const userMessage: ChatMessage = {
+        id: crypto.randomUUID(),
+        role: 'user',
+        content: query,
+        createdAt: new Date(),
+      };
+      addMessage(conversationId, userMessage);
+
+      const assistantMessage: ChatMessage = {
+        id: crypto.randomUUID(),
+        role: 'assistant',
+        content: '',
+        createdAt: new Date(),
+      };
+      addMessage(conversationId, assistantMessage);
+      setLoadingState({ type: 'thinking' });
+
+      const controller = createController();
+
+      try {
+        const response = await fetch(`${API_URL}/api/rag/query`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            query,
+            conversationId,
+          }),
+          signal: controller.signal,
+        });
+
+        if (!response.ok) {
+          const errBody = await response.json().catch(() => ({}));
+          throw new Error(errBody.message || `HTTP ${response.status}`);
+        }
+
+        // SSE streaming
+        setLoadingState({ type: 'streaming', tokens: '' });
+        let fullContent = '';
+        let sources: Source[] = [];
+
+        const reader = response.body?.getReader();
+        const decoder = new TextDecoder();
+        let buffer = '';
+
+        if (!reader) {
+          throw new Error('No readable stream');
+        }
+
+        while (true) {
+          const { done, value } = await reader.read();
+          if (done) break;
+
+          buffer += decoder.decode(value, { stream: true });
+          const lines = buffer.split('\n');
+          buffer = lines.pop() || '';
+
+          for (const line of lines) {
+            const trimmed = line.trim();
+            if (!trimmed) continue;
+
+            const data = parseSSELine(trimmed);
+            if (!data) continue;
+
+            if (data === '[DONE]') {
+              break;
+            }
+
+            try {
+              const parsed = JSON.parse(data);
+
+              switch (parsed.type) {
+                case 'start':
+                  console.log('RAG stream started with model:', parsed.model);
+                  break;
+
+                case 'token':
+                  fullContent += parsed.content;
+                  updateMessage(conversationId, assistantMessage.id, {
+                    content: fullContent,
+                  });
+                  setLoadingState({ type: 'streaming', tokens: fullContent });
+                  break;
+
+                case 'sources':
+                  sources = parsed.sources || [];
+                  break;
+
+                case 'error':
+                  throw new Error(parsed.message);
+              }
+            } catch (e) {
+              if (e instanceof Error && e.message !== 'Unexpected end of JSON input') {
+                throw e;
+              }
+            }
+          }
+        }
+
+        // Final update with sources
+        updateMessage(conversationId, assistantMessage.id, {
+          content: fullContent,
+          sources,
+        });
+        setLoadingState({ type: 'idle' });
+      } catch (err) {
+        const chatError = handleError(err);
+        if (chatError.type !== 'abort') {
+          setError(chatError);
+        }
+        setLoadingState({ type: 'idle' });
+      }
+    },
+    [addMessage, updateMessage, createController, handleError]
+  );
+
+  return { sendMessage, sendRAGQuery, regenerate, stop, loadingState, error, isAborting };
 }

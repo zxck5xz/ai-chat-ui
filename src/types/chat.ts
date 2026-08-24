@@ -4,6 +4,7 @@ export interface Source {
   url: string;
   snippet: string;
   score: number;
+  chunkIndex?: number;
 }
 
 export interface Feedback {

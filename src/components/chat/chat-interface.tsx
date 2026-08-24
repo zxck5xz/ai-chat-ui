@@ -8,12 +8,14 @@ import { ChatInput } from './chat-input';
 import { Button } from '@/components/ui/button';
 import { Plus, MessageSquare, Trash2, RefreshCw, Menu, X } from 'lucide-react';
 import { useEffect, useCallback, useState, useRef, useMemo } from 'react';
+import { DocumentUpload } from './document-upload';
 
 export function ChatInterface() {
   const { conversations, activeId, create, setActive, deleteConversation, init } =
     useConversationStore();
-  const { sendMessage, regenerate, stop, loadingState, error } = useChat();
+  const { sendMessage, sendRAGQuery, regenerate, stop, loadingState, error } = useChat();
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+  const [useRAG, setUseRAG] = useState(false);
   const inputRef = useRef<HTMLTextAreaElement>(null);
 
   const activeConversation = conversations.find((c) => c.id === activeId);
@@ -33,12 +35,20 @@ export function ChatInterface() {
     (content: string) => {
       if (!activeId) {
         const id = create();
-        sendMessage(id, content);
+        if (useRAG) {
+          sendRAGQuery(id, content);
+        } else {
+          sendMessage(id, content);
+        }
       } else {
-        sendMessage(activeId, content);
+        if (useRAG) {
+          sendRAGQuery(activeId, content);
+        } else {
+          sendMessage(activeId, content);
+        }
       }
     },
-    [activeId, create, sendMessage]
+    [activeId, create, sendMessage, sendRAGQuery, useRAG]
   );
 
   const handleRegenerate = useCallback(() => {
@@ -149,6 +159,24 @@ export function ChatInterface() {
           >
             <X className="h-4 w-4" />
           </Button>
+        </div>
+        <DocumentUpload />
+        <div className="p-2 border-t">
+          <div className="flex items-center justify-between px-2 py-1">
+            <span className="text-xs text-muted-foreground">RAG Mode</span>
+            <button
+              onClick={() => setUseRAG(!useRAG)}
+              className={`relative inline-flex h-5 w-9 items-center rounded-full transition-colors ${
+                useRAG ? 'bg-primary' : 'bg-muted'
+              }`}
+            >
+              <span
+                className={`inline-block h-3.5 w-3.5 transform rounded-full bg-white transition-transform ${
+                  useRAG ? 'translate-x-4' : 'translate-x-1'
+                }`}
+              />
+            </button>
+          </div>
         </div>
         <div className="flex-1 overflow-y-auto p-2 space-y-1">
           {conversations.map((conv) => (
