@@ -5,13 +5,14 @@ import { useConversationStore } from '@/hooks/use-conversation';
 import { MessageList } from './message-list';
 import { ChatInput } from './chat-input';
 import { Button } from '@/components/ui/button';
-import { Plus, MessageSquare, Trash2, RefreshCw } from 'lucide-react';
-import { useEffect, useCallback } from 'react';
+import { Plus, MessageSquare, Trash2, RefreshCw, Menu, X } from 'lucide-react';
+import { useEffect, useCallback, useState } from 'react';
 
 export function ChatInterface() {
   const { conversations, activeId, create, setActive, deleteConversation, init } =
     useConversationStore();
   const { sendMessage, regenerate, stop, loadingState, error } = useChat();
+  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
 
   const activeConversation = conversations.find((c) => c.id === activeId);
   const messages = activeConversation?.messages ?? [];
@@ -75,14 +76,41 @@ export function ChatInterface() {
     sendMessage(activeId, newContent);
   }, [activeId, conversations, sendMessage]);
 
+  const handleSelectConversation = useCallback((id: string) => {
+    setActive(id);
+    setIsSidebarOpen(false);
+  }, [setActive]);
+
   return (
-    <div className="flex h-screen">
+    <div className="flex h-screen bg-background">
+      {/* Mobile backdrop */}
+      {isSidebarOpen && (
+        <div
+          className="fixed inset-0 z-40 bg-black/50 md:hidden"
+          onClick={() => setIsSidebarOpen(false)}
+        />
+      )}
+
       {/* Sidebar */}
-      <div className="w-64 border-r bg-muted/30 flex flex-col">
-        <div className="p-4 border-b">
-          <Button onClick={() => create()} className="w-full" variant="outline">
+      <div
+        className={`
+          fixed inset-y-0 left-0 z-50 w-64 border-r bg-muted/30 flex flex-col transform transition-transform duration-200 ease-in-out
+          md:relative md:translate-x-0
+          ${isSidebarOpen ? 'translate-x-0' : '-translate-x-full'}
+        `}
+      >
+        <div className="p-4 border-b flex items-center justify-between">
+          <Button onClick={() => create()} className="flex-1 mr-2" variant="outline">
             <Plus className="h-4 w-4 mr-2" />
             New Chat
+          </Button>
+          <Button
+            variant="ghost"
+            size="icon"
+            className="md:hidden"
+            onClick={() => setIsSidebarOpen(false)}
+          >
+            <X className="h-4 w-4" />
           </Button>
         </div>
         <div className="flex-1 overflow-y-auto p-2 space-y-1">
@@ -96,7 +124,7 @@ export function ChatInterface() {
               }`}
             >
               <button
-                onClick={() => setActive(conv.id)}
+                onClick={() => handleSelectConversation(conv.id)}
                 className="flex-1 text-left px-3 py-2 text-sm flex items-center gap-2"
               >
                 <MessageSquare className="h-4 w-4 shrink-0" />
@@ -114,12 +142,24 @@ export function ChatInterface() {
       </div>
 
       {/* Main chat area */}
-      <div className="flex-1 flex flex-col">
+      <div className="flex-1 flex flex-col min-w-0">
+        {/* Mobile header */}
+        <div className="flex items-center gap-2 p-2 border-b md:hidden">
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={() => setIsSidebarOpen(true)}
+          >
+            <Menu className="h-5 w-5" />
+          </Button>
+          <span className="font-medium truncate">{activeConversation?.title || 'New Chat'}</span>
+        </div>
+
         {error && (
           <div className="p-4 bg-destructive/10 text-destructive text-sm flex items-center justify-between">
-            <span>{error.message}</span>
+            <span className="truncate">{error.message}</span>
             {error.retryable && (
-              <Button size="sm" variant="outline" onClick={handleRegenerate}>
+              <Button size="sm" variant="outline" onClick={handleRegenerate} className="shrink-0 ml-2">
                 <RefreshCw className="h-3 w-3 mr-1" />
                 Retry
               </Button>
