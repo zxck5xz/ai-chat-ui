@@ -7,22 +7,31 @@ const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8787';
 
 export function useOrchestrator() {
   const [tasks, setTasks] = useState<AgentTask[]>([]);
-  const [status, setStatus] = useState<'idle' | 'running' | 'completed' | 'failed'>('idle');
+  const [status, setStatus] = useState<
+    'idle' | 'running' | 'completed' | 'failed' | 'awaiting_approval'
+  >('idle');
   const [currentAgent, setCurrentAgent] = useState<AgentType | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [workflow, setWorkflow] = useState<WorkflowRun | null>(null);
+  const [pendingApproval, setPendingApproval] = useState<{
+    approvalId: string;
+    taskId: string;
+    agent: string;
+    input: string;
+  } | null>(null);
 
-  const runWorkflow = useCallback(async (input: string) => {
+  const runWorkflow = useCallback(async (input: string, requireApproval = false) => {
     setError(null);
     setTasks([]);
     setStatus('running');
     setCurrentAgent(null);
+    setPendingApproval(null);
 
     try {
       const response = await fetch(`${API_URL}/api/orchestrator/run`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ input }),
+        body: JSON.stringify({ input, requireApproval }),
       });
 
       if (!response.ok) {
@@ -123,6 +132,16 @@ export function useOrchestrator() {
                   setStatus('completed');
                   setCurrentAgent(null);
                   break;
+
+                case 'approval_needed':
+                  setStatus('awaiting_approval');
+                  setPendingApproval({
+                    approvalId: event.approvalId || '',
+                    taskId: event.taskId || '',
+                    agent: event.agent || '',
+                    input: event.content || '',
+                  });
+                  break;
               }
             } catch {
               // Skip malformed JSON
@@ -143,15 +162,51 @@ export function useOrchestrator() {
     setCurrentAgent(null);
     setError(null);
     setWorkflow(null);
+    setPendingApproval(null);
   }, []);
 
-  const progress = tasks.length > 0
-    ? Math.round(
-        (tasks.filter((t) => t.status === 'completed' || t.status === 'failed').length /
-          tasks.length) *
-          100
-      )
-    : 0;
+  const approveTask = useCallback(async () => {
+    if (!pendingApproval) return;
+
+    try {
+      await fetch(`${API_URL}/api/orchestrator/approve`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ approvalId: pendingApproval.approvalId }),
+      });
+      setStatus('running');
+      setPendingApproval(null);
+    } catch (err) {
+      const message = err instanceof Error ? err.message : String(err);
+      setError(message);
+    }
+  }, [pendingApproval]);
+
+  const rejectTask = useCallback(async () => {
+    if (!pendingApproval) return;
+
+    try {
+      await fetch(`${API_URL}/api/orchestrator/reject`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ approvalId: pendingApproval.approvalId }),
+      });
+      setStatus('running');
+      setPendingApproval(null);
+    } catch (err) {
+      const message = err instanceof Error ? err.message : String(err);
+      setError(message);
+    }
+  }, [pendingApproval]);
+
+  const progress =
+    tasks.length > 0
+      ? Math.round(
+          (tasks.filter((t) => t.status === 'completed' || t.status === 'failed').length /
+            tasks.length) *
+            100
+        )
+      : 0;
 
   return {
     tasks,
@@ -160,7 +215,10 @@ export function useOrchestrator() {
     error,
     workflow,
     progress,
+    pendingApproval,
     runWorkflow,
     reset,
+    approveTask,
+    rejectTask,
   };
 }

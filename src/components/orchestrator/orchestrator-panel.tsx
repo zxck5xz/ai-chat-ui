@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { Send, RotateCcw, Sparkles } from 'lucide-react';
+import { Send, RotateCcw, Sparkles, Check, X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -15,11 +15,23 @@ import type { DesignSpec, CodeResult, ReviewResult, AgentType } from '@/types/ag
 
 export function OrchestratorPanel() {
   const [input, setInput] = useState('');
-  const { tasks, status, currentAgent, error, progress, runWorkflow, reset } = useOrchestrator();
+  const [requireApproval, setRequireApproval] = useState(false);
+  const {
+    tasks,
+    status,
+    currentAgent,
+    error,
+    progress,
+    pendingApproval,
+    runWorkflow,
+    reset,
+    approveTask,
+    rejectTask,
+  } = useOrchestrator();
 
   const handleSubmit = () => {
     if (!input.trim() || status === 'running') return;
-    runWorkflow(input.trim());
+    runWorkflow(input.trim(), requireApproval);
   };
 
   const getAgentOutput = <T,>(agent: AgentType): T | null => {
@@ -75,14 +87,49 @@ export function OrchestratorPanel() {
               </Button>
             )}
           </div>
+          <label className="flex items-center gap-2 text-sm text-muted-foreground cursor-pointer">
+            <input
+              type="checkbox"
+              checked={requireApproval}
+              onChange={(e) => setRequireApproval(e.target.checked)}
+              className="rounded"
+            />
+            Require approval before each agent
+          </label>
         </div>
 
         {/* Progress */}
         <ProgressBar progress={progress} currentAgent={currentAgent} status={status} />
 
         {/* Error */}
-        {error && (
-          <div className="text-sm text-red-600 bg-red-50 p-3 rounded-lg">{error}</div>
+        {error && <div className="text-sm text-red-600 bg-red-50 p-3 rounded-lg">{error}</div>}
+
+        {/* Approval Panel */}
+        {pendingApproval && (
+          <div className="border border-yellow-300 bg-yellow-50 p-4 rounded-lg space-y-3">
+            <div className="flex items-center gap-2 text-yellow-800 font-medium">
+              <Sparkles size={16} />
+              Approval Required — {pendingApproval.agent}
+            </div>
+            <p className="text-sm text-yellow-700">{pendingApproval.input}</p>
+            <div className="flex gap-2">
+              <Button
+                size="sm"
+                onClick={approveTask}
+                className="flex items-center gap-1 bg-green-600 hover:bg-green-700"
+              >
+                <Check size={14} /> Approve
+              </Button>
+              <Button
+                size="sm"
+                variant="destructive"
+                onClick={rejectTask}
+                className="flex items-center gap-1"
+              >
+                <X size={14} /> Reject
+              </Button>
+            </div>
+          </div>
         )}
 
         {/* Timeline */}

@@ -13,18 +13,20 @@ Frontend cho AI Chat — built với **Next.js 16** + **TypeScript** + **Tailwin
 
 ## Status
 
-| Feature                    | Status         |
-| -------------------------- | -------------- |
-| Streaming AI Chat          | ✅ Done        |
-| Conversation CRUD          | ✅ Done        |
-| Source Citations           | ✅ Done        |
-| Feedback System            | ✅ Done        |
-| Dark/Light Mode            | ✅ Done        |
-| Deploy FE + BE             | ✅ Done        |
-| SSE Streaming Optimization | 🔄 In Progress |
-| Edit/Regenerate/Stop       | 📋 Todo        |
-| Mobile Responsive          | 📋 Todo        |
-| Keyboard Shortcuts         | 📋 Todo        |
+| Feature                  | Status  |
+| ------------------------ | ------- |
+| Streaming AI Chat        | ✅ Done |
+| Conversation CRUD        | ✅ Done |
+| Source Citations         | ✅ Done |
+| Feedback System          | ✅ Done |
+| Dark/Light Mode          | ✅ Done |
+| Edit/Regenerate/Stop     | ✅ Done |
+| Mobile Responsive        | ✅ Done |
+| Keyboard Shortcuts       | ✅ Done |
+| RAG Q&A Visualization    | ✅ Done |
+| Multi-Agent Orchestrator | ✅ Done |
+| Human-in-the-loop        | ✅ Done |
+| Eval Dashboard           | 📋 Todo |
 
 ## Tech Stack
 
@@ -45,8 +47,8 @@ Frontend cho AI Chat — built với **Next.js 16** + **TypeScript** + **Tailwin
 │                    Next.js (Vercel)                     │
 │                                                         │
 │  ┌─────────────┐  ┌─────────────┐  ┌─────────────┐    │
-│  │ Chat UI     │  │ Conversation│  │ Sources     │    │
-│  │ (Streaming) │  │ Manager     │  │ Panel       │    │
+│  │ Chat UI     │  │ Orchestrator│  │ RAG Q&A     │    │
+│  │ (Streaming) │  │ (Multi-Agent│  │ (Vector DB) │    │
 │  └─────────────┘  └─────────────┘  └─────────────┘    │
 │                       │                                 │
 └───────────────────────┼─────────────────────────────────┘
@@ -59,29 +61,55 @@ Frontend cho AI Chat — built với **Next.js 16** + **TypeScript** + **Tailwin
 │  │ API Routes  │  │ D1 Database │  │ Gemini API  │    │
 │  │             │  │ (Messages)  │  │ (AI)        │    │
 │  └─────────────┘  └─────────────┘  └─────────────┘    │
+│                                                         │
+│  ┌─────────────┐  ┌─────────────┐                      │
+│  │ Qdrant      │  │ Orchestrator│                      │
+│  │ (Vectors)   │  │ (Agents)    │                      │
+│  └─────────────┘  └─────────────┘                      │
 └─────────────────────────────────────────────────────────┘
 ```
 
 ## Features
 
-- **Streaming AI Chat**: Real-time token-by-token responses
+### Chat
+
+- **Streaming AI Chat**: Real-time token-by-token responses via SSE
 - **Multi-conversation**: Create, switch, delete conversations
-- **Conversation History**: Persisted in localStorage + D1 database
+- **Conversation History**: Persisted in D1 database
+- **Edit/Regenerate/Stop**: Edit last message, regenerate response, stop streaming
 - **Markdown Rendering**: Rich text display for AI responses
-- **Source Citations**: Show referenced sources with scores
-- **See Reasoning**: Toggle to view retrieved chunks
-- **Feedback System**: Thumbs up/down on assistant messages
-- **Copy Message**: One-click copy for AI responses
+
+### RAG Q&A
+
+- **Document Upload**: Upload and embed documents for RAG
+- **RAG Mode Toggle**: Switch between chat and RAG modes
+- **Source Citations**: Show retrieved chunks with similarity scores
+- **See Reasoning**: Toggle to view retrieved chunks and reasoning
+
+### Multi-Agent Orchestrator
+
+- **Planner Agent**: Analyzes requests and breaks into tasks
+- **Designer Agent**: Creates design specs (layout, colors, typography)
+- **Coder Agent**: Generates React/TypeScript code
+- **Reviewer Agent**: Reviews code for accessibility, performance
+- **Progress Bar**: Multi-step progress visualization
+- **Timeline**: Visual timeline of agent execution
+- **Human-in-the-loop**: Approve/reject tasks before execution
+
+### UI/UX
+
 - **Dark/Light Mode**: Theme toggle with system preference
-- **Error Handling**: Retry logic with user-friendly messages
-- **Responsive Design**: Works on desktop and mobile
+- **Mobile Responsive**: Works on desktop and mobile
+- **Keyboard Shortcuts**: Ctrl+K (focus input), Ctrl+N (new chat), Escape (stop/close)
+- **Copy Message**: One-click copy for AI responses
+- **Feedback System**: Thumbs up/down on assistant messages
 
 ## Getting Started
 
 ### Prerequisites
 
 - Node.js 18+
-- Backend API running ([ai-chat-api](https://github.com/zxck5xz/ai-chat-api))
+- Backend API running ([ai-chat-api](../ai-chat-api/))
 
 ### Installation
 
@@ -133,40 +161,51 @@ vercel --prod
 ai-chat-ui/
 ├── src/
 │   ├── app/
-│   │   ├── layout.tsx              # Root layout + providers
-│   │   ├── page.tsx                # Redirect → /chat
-│   │   ├── globals.css             # Global styles
+│   │   ├── layout.tsx                  # Root layout + providers
+│   │   ├── page.tsx                    # Redirect → /chat
+│   │   ├── globals.css                 # Global styles
 │   │   ├── chat/
-│   │   │   └── page.tsx            # Main chat page
+│   │   │   └── page.tsx                # Main chat page
+│   │   ├── orchestrator/
+│   │   │   └── page.tsx                # Orchestrator page
 │   │   └── api/chat/
-│   │       └── route.ts            # Local API (fallback)
+│   │       └── route.ts                # Local API (fallback)
 │   ├── components/
-│   │   ├── providers.tsx           # Theme + Tooltip + ErrorBoundary
-│   │   ├── ui/                     # shadcn/ui components
+│   │   ├── providers.tsx               # Theme + Tooltip + ErrorBoundary
+│   │   ├── ui/                         # shadcn/ui components
 │   │   ├── chat/
-│   │   │   ├── chat-interface.tsx   # Main container + sidebar
-│   │   │   ├── chat-input.tsx       # Input + Send/Stop buttons
-│   │   │   ├── message-list.tsx     # ScrollArea + auto-scroll
-│   │   │   ├── message-bubble.tsx   # User/Assistant messages
-│   │   │   ├── loading-states.tsx   # Loading indicators
-│   │   │   └── sources-panel.tsx    # Sources display
-│   │   └── shared/
-│   │       ├── theme-toggle.tsx     # Dark/Light toggle
-│   │       └── error-boundary.tsx   # Error boundary
+│   │   │   ├── chat-interface.tsx       # Main container + sidebar
+│   │   │   ├── chat-input.tsx           # Input + Send/Stop buttons
+│   │   │   ├── message-list.tsx         # ScrollArea + auto-scroll
+│   │   │   ├── message-bubble.tsx       # User/Assistant messages
+│   │   │   ├── loading-states.tsx       # Loading indicators
+│   │   │   ├── sources-panel.tsx        # Sources display
+│   │   │   └── document-upload.tsx      # RAG document upload
+│   │   └── orchestrator/
+│   │       ├── orchestrator-panel.tsx   # Main orchestrator UI
+│   │       ├── progress-bar.tsx         # Multi-step progress
+│   │       ├── timeline.tsx             # Agent execution timeline
+│   │       ├── agent-icon.tsx           # Agent type icons
+│   │       ├── design-spec-viewer.tsx   # Design spec display
+│   │       ├── code-viewer.tsx          # Code display with copy
+│   │       └── review-results.tsx       # Review scores display
 │   ├── hooks/
-│   │   ├── use-chat.ts             # Chat logic (send, regenerate)
-│   │   ├── use-abort.ts            # AbortController management
-│   │   └── use-conversation.ts     # Zustand store + localStorage
+│   │   ├── use-chat.ts                 # Chat logic (send, regenerate)
+│   │   ├── use-abort.ts                # AbortController management
+│   │   ├── use-conversation.ts         # Zustand store + localStorage
+│   │   ├── use-orchestrator.ts         # Orchestrator workflow state
+│   │   └── use-keyboard-shortcuts.ts   # Keyboard shortcuts
 │   ├── lib/
-│   │   ├── ai.ts                   # System prompt + config
-│   │   ├── errors.ts               # Error parsing
-│   │   └── utils.ts                # cn() utility
+│   │   ├── ai.ts                       # System prompt + config
+│   │   ├── errors.ts                   # Error parsing
+│   │   └── utils.ts                    # cn() utility
 │   └── types/
-│       └── chat.ts                 # TypeScript types
-├── .env.example                    # Environment template
-├── components.json                 # shadcn/ui config
-├── next.config.ts                  # Next.js config
-├── tailwind.config.ts              # Tailwind config
+│       ├── chat.ts                     # Chat TypeScript types
+│       └── agents.ts                   # Agent TypeScript types
+├── .env.example                        # Environment template
+├── components.json                     # shadcn/ui config
+├── next.config.ts                      # Next.js config
+├── tailwind.config.ts                  # Tailwind config
 └── package.json
 ```
 
@@ -202,6 +241,19 @@ setActive(id);
 deleteConversation(id);
 ```
 
+### `useOrchestrator`
+
+```typescript
+const { tasks, status, progress, runWorkflow, approveTask, rejectTask } = useOrchestrator();
+
+// Run workflow
+await runWorkflow('Create a login form', true); // true = requireApproval
+
+// Approve/Reject task
+await approveTask();
+await rejectTask();
+```
+
 ## API Reference
 
 ### Send Message
@@ -225,6 +277,29 @@ data: {"type": "token", "content": ", how"}
 data: {"type": "done"}
 ```
 
+### Run Orchestrator Workflow
+
+```typescript
+POST /api/orchestrator/run
+Content-Type: application/json
+
+{
+  "input": "Create a login form",
+  "requireApproval": true
+}
+```
+
+### Approve/Reject Task
+
+```typescript
+POST /api/orchestrator/approve
+Content-Type: application/json
+
+{
+  "approvalId": "uuid"
+}
+```
+
 ## Roadmap
 
 ### Phase 1: AI-Adjacent Baseline ✅
@@ -233,17 +308,17 @@ data: {"type": "done"}
 - [x] Conversation CRUD + persistence
 - [x] Sources panel + feedback
 - [x] Deploy FE (Vercel) + BE (Cloudflare)
-- [ ] Streaming SSE optimization
-- [ ] Edit/Regenerate/Stop
-- [ ] Mobile responsive
-- [ ] Keyboard shortcuts
+- [x] Streaming SSE optimization
+- [x] Edit/Regenerate/Stop
+- [x] Mobile responsive
+- [x] Keyboard shortcuts
 
-### Phase 2: RAG & Agent Orchestration (Planned)
+### Phase 2: RAG & Agent Orchestration ✅
 
-- [ ] RAG pipeline integration
-- [ ] Vector DB (Qdrant/Pinecone)
-- [ ] Agent orchestration (multi-step)
-- [ ] Human-in-the-loop approvals
+- [x] RAG pipeline integration
+- [x] Vector DB (Qdrant)
+- [x] Agent orchestration (multi-step)
+- [x] Human-in-the-loop approvals
 
 ### Phase 3: Evaluation & Safety (Planned)
 
