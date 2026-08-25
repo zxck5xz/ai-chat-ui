@@ -6,7 +6,7 @@ import { useKeyboardShortcuts } from '@/hooks/use-keyboard-shortcuts';
 import { MessageList } from './message-list';
 import { ChatInput } from './chat-input';
 import { Button } from '@/components/ui/button';
-import { Plus, MessageSquare, Trash2, RefreshCw, Menu, X, Sparkles } from 'lucide-react';
+import { Plus, MessageSquare, Trash2, RefreshCw, Menu, X, Sparkles, BarChart3 } from 'lucide-react';
 import { useEffect, useCallback, useState, useRef, useMemo } from 'react';
 import { DocumentUpload } from './document-upload';
 import Link from 'next/link';
@@ -167,6 +167,14 @@ export function ChatInterface() {
             <Button variant="outline" className="w-full flex items-center gap-2">
               <Sparkles size={16} className="text-violet-500" />
               Multi-Agent Orchestrator
+            </Button>
+          </Link>
+        </div>
+        <div className="p-2">
+          <Link href="/eval">
+            <Button variant="outline" className="w-full flex items-center gap-2">
+              <BarChart3 size={16} className="text-blue-500" />
+              Eval Dashboard
             </Button>
           </Link>
         </div>
