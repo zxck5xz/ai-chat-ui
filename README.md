@@ -13,32 +13,33 @@ Frontend cho AI Chat — built với **Next.js 16** + **TypeScript** + **Tailwin
 
 ## Status
 
-| Feature                  | Status  |
-| ------------------------ | ------- |
-| Streaming AI Chat        | ✅ Done |
-| Conversation CRUD        | ✅ Done |
-| Source Citations         | ✅ Done |
-| Feedback System          | ✅ Done |
-| Dark/Light Mode          | ✅ Done |
-| Edit/Regenerate/Stop     | ✅ Done |
-| Mobile Responsive        | ✅ Done |
-| Keyboard Shortcuts       | ✅ Done |
-| RAG Q&A Visualization    | ✅ Done |
+| Feature | Status |
+|---------|--------|
+| Streaming AI Chat | ✅ Done |
+| Conversation CRUD | ✅ Done |
+| Source Citations | ✅ Done |
+| Feedback System | ✅ Done |
+| Dark/Light Mode | ✅ Done |
+| Edit/Regenerate/Stop | ✅ Done |
+| Mobile Responsive | ✅ Done |
+| Keyboard Shortcuts | ✅ Done |
+| RAG Q&A Visualization | ✅ Done |
 | Multi-Agent Orchestrator | ✅ Done |
-| Human-in-the-loop        | ✅ Done |
-| Eval Dashboard           | 📋 Todo |
+| Human-in-the-loop | ✅ Done |
+| Eval Dashboard | ✅ Done |
+| Safety Gates | ✅ Done |
 
 ## Tech Stack
 
-| Layer      | Technology              | Purpose                 |
-| ---------- | ----------------------- | ----------------------- |
-| Framework  | Next.js 16 (App Router) | React framework         |
-| Language   | TypeScript 5.x          | Type safety             |
-| Styling    | Tailwind CSS 4          | Utility-first CSS       |
-| Components | shadcn/ui               | Pre-built UI primitives |
-| State      | Zustand                 | Conversation management |
-| Icons      | Lucide React            | Icon library            |
-| AI         | Google Gemini (via BE)  | LLM inference           |
+| Layer | Technology | Purpose |
+|-------|-----------|---------|
+| Framework | Next.js 16 (App Router) | React framework |
+| Language | TypeScript 5.x | Type safety |
+| Styling | Tailwind CSS 4 | Utility-first CSS |
+| Components | shadcn/ui | Pre-built UI primitives |
+| State | Zustand | Conversation management |
+| Icons | Lucide React | Icon library |
+| AI | Google Gemini (via BE) | LLM inference |
 
 ## Architecture
 
@@ -47,8 +48,8 @@ Frontend cho AI Chat — built với **Next.js 16** + **TypeScript** + **Tailwin
 │                    Next.js (Vercel)                     │
 │                                                         │
 │  ┌─────────────┐  ┌─────────────┐  ┌─────────────┐    │
-│  │ Chat UI     │  │ Orchestrator│  │ RAG Q&A     │    │
-│  │ (Streaming) │  │ (Multi-Agent│  │ (Vector DB) │    │
+│  │ Chat UI     │  │ Orchestrator│  │ Eval        │    │
+│  │ (Streaming) │  │ (Multi-Agent│  │ Dashboard   │    │
 │  └─────────────┘  └─────────────┘  └─────────────┘    │
 │                       │                                 │
 └───────────────────────┼─────────────────────────────────┘
@@ -72,7 +73,6 @@ Frontend cho AI Chat — built với **Next.js 16** + **TypeScript** + **Tailwin
 ## Features
 
 ### Chat
-
 - **Streaming AI Chat**: Real-time token-by-token responses via SSE
 - **Multi-conversation**: Create, switch, delete conversations
 - **Conversation History**: Persisted in D1 database
@@ -80,14 +80,12 @@ Frontend cho AI Chat — built với **Next.js 16** + **TypeScript** + **Tailwin
 - **Markdown Rendering**: Rich text display for AI responses
 
 ### RAG Q&A
-
 - **Document Upload**: Upload and embed documents for RAG
 - **RAG Mode Toggle**: Switch between chat and RAG modes
 - **Source Citations**: Show retrieved chunks with similarity scores
 - **See Reasoning**: Toggle to view retrieved chunks and reasoning
 
 ### Multi-Agent Orchestrator
-
 - **Planner Agent**: Analyzes requests and breaks into tasks
 - **Designer Agent**: Creates design specs (layout, colors, typography)
 - **Coder Agent**: Generates React/TypeScript code
@@ -96,8 +94,15 @@ Frontend cho AI Chat — built với **Next.js 16** + **TypeScript** + **Tailwin
 - **Timeline**: Visual timeline of agent execution
 - **Human-in-the-loop**: Approve/reject tasks before execution
 
-### UI/UX
+### Eval Dashboard
+- **Metrics Cards**: 8 key metrics (runs, cases, accuracy, latency, cost, hallucination, feedback)
+- **Timeseries Charts**: Accuracy & latency trends over time
+- **Failure Cases**: Expandable table with query, expected/actual output, feedback
+- **Safety Gates**: Automatic deploy blocking if metrics degrade
+- **Deploy Approvals**: Human-in-the-loop deployment decisions
+- **Filters**: Model version, date range filtering
 
+### UI/UX
 - **Dark/Light Mode**: Theme toggle with system preference
 - **Mobile Responsive**: Works on desktop and mobile
 - **Keyboard Shortcuts**: Ctrl+K (focus input), Ctrl+N (new chat), Escape (stop/close)
@@ -114,16 +119,9 @@ Frontend cho AI Chat — built với **Next.js 16** + **TypeScript** + **Tailwin
 ### Installation
 
 ```bash
-# Clone the repository
 git clone https://github.com/zxck5xz/ai-chat-ui.git
-
-# Navigate to project directory
 cd ai-chat-ui
-
-# Install dependencies
 npm install
-
-# Copy environment variables
 cp .env.example .env.local
 ```
 
@@ -132,7 +130,6 @@ cp .env.example .env.local
 Edit `.env.local`:
 
 ```env
-# Backend API URL
 NEXT_PUBLIC_API_URL=http://localhost:8787
 ```
 
@@ -168,6 +165,8 @@ ai-chat-ui/
 │   │   │   └── page.tsx                # Main chat page
 │   │   ├── orchestrator/
 │   │   │   └── page.tsx                # Orchestrator page
+│   │   ├── eval/
+│   │   │   └── page.tsx                # Eval dashboard page
 │   │   └── api/chat/
 │   │       └── route.ts                # Local API (fallback)
 │   ├── components/
@@ -181,31 +180,39 @@ ai-chat-ui/
 │   │   │   ├── loading-states.tsx       # Loading indicators
 │   │   │   ├── sources-panel.tsx        # Sources display
 │   │   │   └── document-upload.tsx      # RAG document upload
-│   │   └── orchestrator/
-│   │       ├── orchestrator-panel.tsx   # Main orchestrator UI
-│   │       ├── progress-bar.tsx         # Multi-step progress
-│   │       ├── timeline.tsx             # Agent execution timeline
-│   │       ├── agent-icon.tsx           # Agent type icons
-│   │       ├── design-spec-viewer.tsx   # Design spec display
-│   │       ├── code-viewer.tsx          # Code display with copy
-│   │       └── review-results.tsx       # Review scores display
+│   │   ├── orchestrator/
+│   │   │   ├── orchestrator-panel.tsx   # Main orchestrator UI
+│   │   │   ├── progress-bar.tsx         # Multi-step progress
+│   │   │   ├── timeline.tsx             # Agent execution timeline
+│   │   │   ├── agent-icon.tsx           # Agent type icons
+│   │   │   ├── design-spec-viewer.tsx   # Design spec display
+│   │   │   ├── code-viewer.tsx          # Code display with copy
+│   │   │   └── review-results.tsx       # Review scores display
+│   │   └── eval/
+│   │       ├── metrics-cards.tsx        # 8 metric cards
+│   │       ├── timeseries-chart.tsx     # Accuracy & latency charts
+│   │       ├── failure-cases-table.tsx  # Expandable failure cases
+│   │       ├── safety-gates.tsx         # Safety gates display
+│   │       ├── deploy-approvals.tsx     # Deploy approval requests
+│   │       └── eval-filters.tsx         # Model & date filters
 │   ├── hooks/
-│   │   ├── use-chat.ts                 # Chat logic (send, regenerate)
+│   │   ├── use-chat.ts                 # Chat logic
 │   │   ├── use-abort.ts                # AbortController management
-│   │   ├── use-conversation.ts         # Zustand store + localStorage
+│   │   ├── use-conversation.ts         # Zustand store
 │   │   ├── use-orchestrator.ts         # Orchestrator workflow state
+│   │   ├── use-eval-dashboard.ts       # Eval dashboard state
 │   │   └── use-keyboard-shortcuts.ts   # Keyboard shortcuts
 │   ├── lib/
 │   │   ├── ai.ts                       # System prompt + config
 │   │   ├── errors.ts                   # Error parsing
 │   │   └── utils.ts                    # cn() utility
 │   └── types/
-│       ├── chat.ts                     # Chat TypeScript types
-│       └── agents.ts                   # Agent TypeScript types
+│       ├── chat.ts                     # Chat types
+│       ├── agents.ts                   # Agent types
+│       └── eval.ts                     # Eval types
 ├── .env.example                        # Environment template
 ├── components.json                     # shadcn/ui config
 ├── next.config.ts                      # Next.js config
-├── tailwind.config.ts                  # Tailwind config
 └── package.json
 ```
 
@@ -215,89 +222,26 @@ ai-chat-ui/
 
 ```typescript
 const { sendMessage, regenerate, stop, loadingState, error } = useChat();
-
-// Send a message
 await sendMessage(conversationId, 'Hello AI');
-
-// Regenerate last response
 await regenerate(conversationId);
-
-// Stop current generation
 stop();
-```
-
-### `useConversationStore`
-
-```typescript
-const { conversations, activeId, create, setActive, deleteConversation } = useConversationStore();
-
-// Create new conversation
-const id = create();
-
-// Switch conversation
-setActive(id);
-
-// Delete conversation
-deleteConversation(id);
 ```
 
 ### `useOrchestrator`
 
 ```typescript
 const { tasks, status, progress, runWorkflow, approveTask, rejectTask } = useOrchestrator();
-
-// Run workflow
-await runWorkflow('Create a login form', true); // true = requireApproval
-
-// Approve/Reject task
+await runWorkflow('Create a login form', true);
 await approveTask();
 await rejectTask();
 ```
 
-## API Reference
-
-### Send Message
+### `useEvalDashboard`
 
 ```typescript
-POST /api/chat
-Content-Type: application/json
-
-{
-  "conversationId": "string",
-  "message": "string"
-}
-```
-
-### Response (Streaming)
-
-```typescript
-// SSE stream with token-by-token responses
-data: {"type": "token", "content": "Hello"}
-data: {"type": "token", "content": ", how"}
-data: {"type": "done"}
-```
-
-### Run Orchestrator Workflow
-
-```typescript
-POST /api/orchestrator/run
-Content-Type: application/json
-
-{
-  "input": "Create a login form",
-  "requireApproval": true
-}
-```
-
-### Approve/Reject Task
-
-```typescript
-POST /api/orchestrator/approve
-Content-Type: application/json
-
-{
-  "approvalId": "uuid"
-}
+const { metrics, timeseries, failures, gates, fetchMetrics, fetchTimeseries } = useEvalDashboard();
+await fetchMetrics({ model_version: 'gemini-3.6-flash' });
+await fetchTimeseries({ days: 30 });
 ```
 
 ## Roadmap
@@ -320,11 +264,11 @@ Content-Type: application/json
 - [x] Agent orchestration (multi-step)
 - [x] Human-in-the-loop approvals
 
-### Phase 3: Evaluation & Safety (Planned)
+### Phase 3: Evaluation & Safety ✅
 
-- [ ] Eval dashboard
-- [ ] Safety gates
-- [ ] CI/CD integration
+- [x] Eval dashboard
+- [x] Safety gates
+- [x] Deploy approvals
 
 ## Contributing
 
