@@ -6,9 +6,10 @@ import { useKeyboardShortcuts } from '@/hooks/use-keyboard-shortcuts';
 import { MessageList } from './message-list';
 import { ChatInput } from './chat-input';
 import { Button } from '@/components/ui/button';
-import { Plus, MessageSquare, Trash2, RefreshCw, Menu, X } from 'lucide-react';
+import { Plus, MessageSquare, Trash2, RefreshCw, Menu, X, Sparkles } from 'lucide-react';
 import { useEffect, useCallback, useState, useRef, useMemo } from 'react';
 import { DocumentUpload } from './document-upload';
+import Link from 'next/link';
 
 export function ChatInterface() {
   const { conversations, activeId, create, setActive, deleteConversation, init } =
@@ -161,6 +162,14 @@ export function ChatInterface() {
           </Button>
         </div>
         <DocumentUpload />
+        <div className="p-2 border-t">
+          <Link href="/orchestrator">
+            <Button variant="outline" className="w-full flex items-center gap-2">
+              <Sparkles size={16} className="text-violet-500" />
+              Multi-Agent Orchestrator
+            </Button>
+          </Link>
+        </div>
         <div className="p-2 border-t">
           <div className="flex items-center justify-between px-2 py-1">
             <span className="text-xs text-muted-foreground">RAG Mode</span>
