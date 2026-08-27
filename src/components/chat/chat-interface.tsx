@@ -6,7 +6,18 @@ import { useKeyboardShortcuts } from '@/hooks/use-keyboard-shortcuts';
 import { MessageList } from './message-list';
 import { ChatInput } from './chat-input';
 import { Button } from '@/components/ui/button';
-import { Plus, MessageSquare, Trash2, RefreshCw, Menu, X, Sparkles, BarChart3, Code } from 'lucide-react';
+import {
+  Plus,
+  MessageSquare,
+  Trash2,
+  RefreshCw,
+  Menu,
+  X,
+  Sparkles,
+  BarChart3,
+  Code,
+  Search,
+} from 'lucide-react';
 import { useEffect, useCallback, useState, useRef, useMemo } from 'react';
 import { DocumentUpload } from './document-upload';
 import Link from 'next/link';
@@ -183,6 +194,14 @@ export function ChatInterface() {
             <Button variant="outline" className="w-full flex items-center gap-2">
               <Code size={16} className="text-purple-500" />
               Code Review Bot
+            </Button>
+          </Link>
+        </div>
+        <div className="p-2">
+          <Link href="/hybrid-search">
+            <Button variant="outline" className="w-full flex items-center gap-2">
+              <Search size={16} className="text-orange-500" />
+              Hybrid Search
             </Button>
           </Link>
         </div>
