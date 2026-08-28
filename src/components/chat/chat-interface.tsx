@@ -17,6 +17,9 @@ import {
   BarChart3,
   Code,
   Search,
+  Wrench,
+  Eye,
+  FlaskConical,
 } from 'lucide-react';
 import { useEffect, useCallback, useState, useRef, useMemo } from 'react';
 import { DocumentUpload } from './document-upload';
@@ -202,6 +205,30 @@ export function ChatInterface() {
             <Button variant="outline" className="w-full flex items-center gap-2">
               <Search size={16} className="text-orange-500" />
               Hybrid Search
+            </Button>
+          </Link>
+        </div>
+        <div className="p-2">
+          <Link href="/tool-agent">
+            <Button variant="outline" className="w-full flex items-center gap-2">
+              <Wrench size={16} className="text-red-500" />
+              Tool Agent
+            </Button>
+          </Link>
+        </div>
+        <div className="p-2">
+          <Link href="/observability">
+            <Button variant="outline" className="w-full flex items-center gap-2">
+              <Eye size={16} className="text-cyan-500" />
+              Observability
+            </Button>
+          </Link>
+        </div>
+        <div className="p-2">
+          <Link href="/fine-tuning">
+            <Button variant="outline" className="w-full flex items-center gap-2">
+              <FlaskConical size={16} className="text-emerald-500" />
+              Fine-tuning
             </Button>
           </Link>
         </div>

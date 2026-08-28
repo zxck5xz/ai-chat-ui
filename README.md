@@ -13,33 +13,36 @@ Frontend cho AI Chat — built với **Next.js 16** + **TypeScript** + **Tailwin
 
 ## Status
 
-| Feature | Status |
-|---------|--------|
-| Streaming AI Chat | ✅ Done |
-| Conversation CRUD | ✅ Done |
-| Source Citations | ✅ Done |
-| Feedback System | ✅ Done |
-| Dark/Light Mode | ✅ Done |
-| Edit/Regenerate/Stop | ✅ Done |
-| Mobile Responsive | ✅ Done |
-| Keyboard Shortcuts | ✅ Done |
-| RAG Q&A Visualization | ✅ Done |
-| Multi-Agent Orchestrator | ✅ Done |
-| Human-in-the-loop | ✅ Done |
-| Eval Dashboard | ✅ Done |
-| Safety Gates | ✅ Done |
+| Feature                       | Status  |
+| ----------------------------- | ------- |
+| Streaming AI Chat             | ✅ Done |
+| Conversation CRUD             | ✅ Done |
+| Source Citations              | ✅ Done |
+| Feedback System               | ✅ Done |
+| Dark/Light Mode               | ✅ Done |
+| Edit/Regenerate/Stop          | ✅ Done |
+| Mobile Responsive             | ✅ Done |
+| Keyboard Shortcuts            | ✅ Done |
+| RAG Q&A Visualization         | ✅ Done |
+| Multi-Agent Orchestrator      | ✅ Done |
+| Human-in-the-loop             | ✅ Done |
+| Eval Dashboard                | ✅ Done |
+| Safety Gates                  | ✅ Done |
+| Code Review Bot               | ✅ Done |
+| Hybrid Search Dashboard       | ✅ Done |
+| Tool Agent (Function Calling) | ✅ Done |
 
 ## Tech Stack
 
-| Layer | Technology | Purpose |
-|-------|-----------|---------|
-| Framework | Next.js 16 (App Router) | React framework |
-| Language | TypeScript 5.x | Type safety |
-| Styling | Tailwind CSS 4 | Utility-first CSS |
-| Components | shadcn/ui | Pre-built UI primitives |
-| State | Zustand | Conversation management |
-| Icons | Lucide React | Icon library |
-| AI | Google Gemini (via BE) | LLM inference |
+| Layer      | Technology              | Purpose                 |
+| ---------- | ----------------------- | ----------------------- |
+| Framework  | Next.js 16 (App Router) | React framework         |
+| Language   | TypeScript 5.x          | Type safety             |
+| Styling    | Tailwind CSS 4          | Utility-first CSS       |
+| Components | shadcn/ui               | Pre-built UI primitives |
+| State      | Zustand                 | Conversation management |
+| Icons      | Lucide React            | Icon library            |
+| AI         | Google Gemini (via BE)  | LLM inference           |
 
 ## Architecture
 
@@ -51,6 +54,10 @@ Frontend cho AI Chat — built với **Next.js 16** + **TypeScript** + **Tailwin
 │  │ Chat UI     │  │ Orchestrator│  │ Eval        │    │
 │  │ (Streaming) │  │ (Multi-Agent│  │ Dashboard   │    │
 │  └─────────────┘  └─────────────┘  └─────────────┘    │
+│  ┌─────────────┐  ┌─────────────┐                      │
+│  │ Code Review │  │ Hybrid      │                      │
+│  │ Bot         │  │ Search      │                      │
+│  └─────────────┘  └─────────────┘                      │
 │                       │                                 │
 └───────────────────────┼─────────────────────────────────┘
                         │
@@ -63,16 +70,18 @@ Frontend cho AI Chat — built với **Next.js 16** + **TypeScript** + **Tailwin
 │  │             │  │ (Messages)  │  │ (AI)        │    │
 │  └─────────────┘  └─────────────┘  └─────────────┘    │
 │                                                         │
-│  ┌─────────────┐  ┌─────────────┐                      │
-│  │ Qdrant      │  │ Orchestrator│                      │
-│  │ (Vectors)   │  │ (Agents)    │                      │
-│  └─────────────┘  └─────────────┘                      │
+│  ┌─────────────┐  ┌─────────────┐  ┌─────────────┐    │
+│  │ Qdrant      │  │ Orchestrator│  │ Hybrid      │    │
+│  │ (Vectors)   │  │ (Agents)    │  │ Search      │    │
+│  └─────────────┘  └─────────────┘  │ (BM25+Vec)  │    │
+│                                     └─────────────┘    │
 └─────────────────────────────────────────────────────────┘
 ```
 
 ## Features
 
 ### Chat
+
 - **Streaming AI Chat**: Real-time token-by-token responses via SSE
 - **Multi-conversation**: Create, switch, delete conversations
 - **Conversation History**: Persisted in D1 database
@@ -80,12 +89,14 @@ Frontend cho AI Chat — built với **Next.js 16** + **TypeScript** + **Tailwin
 - **Markdown Rendering**: Rich text display for AI responses
 
 ### RAG Q&A
+
 - **Document Upload**: Upload and embed documents for RAG
 - **RAG Mode Toggle**: Switch between chat and RAG modes
 - **Source Citations**: Show retrieved chunks with similarity scores
 - **See Reasoning**: Toggle to view retrieved chunks and reasoning
 
 ### Multi-Agent Orchestrator
+
 - **Planner Agent**: Analyzes requests and breaks into tasks
 - **Designer Agent**: Creates design specs (layout, colors, typography)
 - **Coder Agent**: Generates React/TypeScript code
@@ -95,6 +106,7 @@ Frontend cho AI Chat — built với **Next.js 16** + **TypeScript** + **Tailwin
 - **Human-in-the-loop**: Approve/reject tasks before execution
 
 ### Eval Dashboard
+
 - **Metrics Cards**: 8 key metrics (runs, cases, accuracy, latency, cost, hallucination, feedback)
 - **Timeseries Charts**: Accuracy & latency trends over time
 - **Failure Cases**: Expandable table with query, expected/actual output, feedback
@@ -102,7 +114,30 @@ Frontend cho AI Chat — built với **Next.js 16** + **TypeScript** + **Tailwin
 - **Deploy Approvals**: Human-in-the-loop deployment decisions
 - **Filters**: Model version, date range filtering
 
+### Code Review Bot
+
+- **GitHub Integration**: Webhook for PR events, inline comments
+- **Severity Analysis**: Critical, warning, info issue classification
+- **Review Dashboard**: History, metrics, top repositories
+
+### Hybrid Search Dashboard
+
+- **Chunking Comparison**: Compare fixed, recursive, semantic, document-aware strategies
+- **Search Comparison**: Side-by-side vector vs BM25 vs hybrid results
+- **Overlap Analysis**: See how different methods overlap
+- **Evaluation Metrics**: Recall@k, MRR, Precision@k, NDCG, context relevance, faithfulness
+- **A/B Testing**: Create and analyze tests for prompts and configurations
+
+### Tool Agent (Function Calling)
+
+- **Reasoning Chain**: Visualize multi-step reasoning with expandable steps
+- **Tool Execution**: Real-time tool call cards with input/output/status
+- **Progress Bar**: Step count + tool call count progress
+- **Example Queries**: Pre-built examples (price comparison, calculations)
+- **4 Tools**: Web search (Jina), HTTP request, calculator, get current time
+
 ### UI/UX
+
 - **Dark/Light Mode**: Theme toggle with system preference
 - **Mobile Responsive**: Works on desktop and mobile
 - **Keyboard Shortcuts**: Ctrl+K (focus input), Ctrl+N (new chat), Escape (stop/close)
@@ -167,6 +202,12 @@ ai-chat-ui/
 │   │   │   └── page.tsx                # Orchestrator page
 │   │   ├── eval/
 │   │   │   └── page.tsx                # Eval dashboard page
+│   │   ├── code-review/
+│   │   │   └── page.tsx                # Code review page
+│   │   ├── hybrid-search/
+│   │   │   └── page.tsx                # Hybrid search page
+│   │   ├── tool-agent/
+│   │   │   └── page.tsx                # Tool agent page
 │   │   └── api/chat/
 │   │       └── route.ts                # Local API (fallback)
 │   ├── components/
@@ -195,12 +236,17 @@ ai-chat-ui/
 │   │       ├── safety-gates.tsx         # Safety gates display
 │   │       ├── deploy-approvals.tsx     # Deploy approval requests
 │   │       └── eval-filters.tsx         # Model & date filters
+│   │   ├── tool-agent/
+│   │   │   ├── tool-agent-panel.tsx     # Main tool agent UI
+│   │   │   ├── reasoning-step.tsx       # Expandable reasoning step
+│   │   │   └── tool-call-card.tsx       # Tool call display
 │   ├── hooks/
 │   │   ├── use-chat.ts                 # Chat logic
 │   │   ├── use-abort.ts                # AbortController management
 │   │   ├── use-conversation.ts         # Zustand store
 │   │   ├── use-orchestrator.ts         # Orchestrator workflow state
 │   │   ├── use-eval-dashboard.ts       # Eval dashboard state
+│   │   ├── use-tool-agent.ts           # Tool agent state + SSE
 │   │   └── use-keyboard-shortcuts.ts   # Keyboard shortcuts
 │   ├── lib/
 │   │   ├── ai.ts                       # System prompt + config
@@ -209,7 +255,10 @@ ai-chat-ui/
 │   └── types/
 │       ├── chat.ts                     # Chat types
 │       ├── agents.ts                   # Agent types
-│       └── eval.ts                     # Eval types
+│       ├── eval.ts                     # Eval types
+│       ├── code-review.ts              # Code review types
+│       ├── hybrid-search.ts            # Hybrid search types
+│       └── tool-agent.ts               # Tool agent types
 ├── .env.example                        # Environment template
 ├── components.json                     # shadcn/ui config
 ├── next.config.ts                      # Next.js config
