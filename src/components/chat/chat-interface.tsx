@@ -20,6 +20,7 @@ import {
   Wrench,
   Eye,
   FlaskConical,
+  Mic,
 } from 'lucide-react';
 import { useEffect, useCallback, useState, useRef, useMemo } from 'react';
 import { DocumentUpload } from './document-upload';
@@ -229,6 +230,30 @@ export function ChatInterface() {
             <Button variant="outline" className="w-full flex items-center gap-2">
               <FlaskConical size={16} className="text-emerald-500" />
               Fine-tuning
+            </Button>
+          </Link>
+        </div>
+        <div className="p-2">
+          <Link href="/voice-agent">
+            <Button variant="outline" className="w-full flex items-center gap-2">
+              <Mic size={16} className="text-cyan-500" />
+              Voice Agent
+            </Button>
+          </Link>
+        </div>
+        <div className="p-2">
+          <Link href="/multi-modal">
+            <Button variant="outline" className="w-full flex items-center gap-2">
+              <Sparkles size={16} className="text-purple-400" />
+              Multi-Modal AI
+            </Button>
+          </Link>
+        </div>
+        <div className="p-2">
+          <Link href="/search">
+            <Button variant="outline" className="w-full flex items-center gap-2">
+              <Search size={16} className="text-blue-400" />
+              AI Search
             </Button>
           </Link>
         </div>
