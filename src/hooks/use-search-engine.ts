@@ -3,7 +3,6 @@
 import { useState, useCallback } from 'react';
 import type {
   QueryUnderstandingResult,
-  SearchResponse,
   SearchResult,
   SearchAnalytics,
 } from '@/types/search-engine';
@@ -19,6 +18,7 @@ export function useSearchEngine() {
   const [error, setError] = useState<string | null>(null);
   const [analytics, setAnalytics] = useState<SearchAnalytics | null>(null);
   const [searchHistory, setSearchHistory] = useState<string[]>([]);
+  const [lastQueryId, setLastQueryId] = useState<string | null>(null);
 
   const processQuery = useCallback(async (searchQuery: string) => {
     setIsProcessing(true);
@@ -45,128 +45,167 @@ export function useSearchEngine() {
     }
   }, []);
 
-  const search = useCallback(async (searchQuery: string) => {
-    setIsSearching(true);
-    setError(null);
-    setQuery(searchQuery);
+  const search = useCallback(
+    async (searchQuery: string) => {
+      setIsSearching(true);
+      setError(null);
+      setQuery(searchQuery);
+      const startedAt = Date.now();
 
-    try {
-      // Process query first
-      const queryResult = await processQuery(searchQuery);
+      try {
+        // Process query first
+        const queryResult = await processQuery(searchQuery);
 
-      // Then search with expanded queries
-      const response = await fetch(`${API_URL}/api/hybrid/search`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          query: searchQuery,
-          expandedQueries: queryResult?.expanded?.expandedQueries || [searchQuery],
-          topK: 10,
-        }),
-      });
+        // Then search with expanded queries
+        const response = await fetch(`${API_URL}/api/hybrid/search`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            query: searchQuery,
+            expandedQueries: queryResult?.expanded?.expandedQueries || [searchQuery],
+            topK: 10,
+          }),
+        });
 
-      if (!response.ok) throw new Error(`Search failed: ${response.status}`);
+        if (!response.ok) throw new Error(`Search failed: ${response.status}`);
 
-      const data = await response.json();
-      setResults(data.results || []);
+        const data = await response.json();
+        setResults(data.results || []);
 
-      // Add to search history
-      setSearchHistory((prev) => [searchQuery, ...prev.slice(0, 19)]);
+        // Persist query for analytics (fire-and-forget, but capture id for click tracking)
+        const latencyMs = Date.now() - startedAt;
+        fetch(`${API_URL}/api/search/analytics/record-query`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            query: searchQuery,
+            expandedQuery: queryResult?.expanded?.expandedQueries?.[1],
+            complexity: queryResult?.classified?.complexity ?? 'simple',
+            strategy: queryResult?.expanded?.strategy ?? 'hyde',
+            resultsCount: data.results?.length ?? 0,
+            latencyMs,
+          }),
+        })
+          .then((r) => r.json())
+          .then((d) => {
+            if (d?.query?.id) setLastQueryId(d.query.id);
+          })
+          .catch(() => {});
 
-      return data.results;
-    } catch (err) {
-      const message = err instanceof Error ? err.message : 'Search failed';
-      setError(message);
-      throw err;
-    } finally {
-      setIsSearching(false);
-    }
-  }, [processQuery]);
+        // Add to search history
+        setSearchHistory((prev) => [searchQuery, ...prev.slice(0, 19)]);
 
-  const searchWithStreaming = useCallback(async function* (searchQuery: string) {
-    setIsSearching(true);
-    setError(null);
-    setQuery(searchQuery);
+        return data.results;
+      } catch (err) {
+        const message = err instanceof Error ? err.message : 'Search failed';
+        setError(message);
+        throw err;
+      } finally {
+        setIsSearching(false);
+      }
+    },
+    [processQuery]
+  );
 
-    try {
-      // Process query
-      const queryResult = await processQuery(searchQuery);
+  const searchWithStreaming = useCallback(
+    async function* (searchQuery: string) {
+      setIsSearching(true);
+      setError(null);
+      setQuery(searchQuery);
 
-      // Streaming RAG query
-      const response = await fetch(`${API_URL}/api/hybrid/rag-query`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          query: searchQuery,
-          expandedQueries: queryResult?.expanded?.expandedQueries || [searchQuery],
-          topK: 5,
-          stream: true,
-        }),
-      });
+      try {
+        // Process query
+        const queryResult = await processQuery(searchQuery);
 
-      if (!response.ok) throw new Error(`Search failed: ${response.status}`);
+        // Streaming RAG query
+        const response = await fetch(`${API_URL}/api/hybrid/rag-query`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            query: searchQuery,
+            expandedQueries: queryResult?.expanded?.expandedQueries || [searchQuery],
+            topK: 5,
+            stream: true,
+          }),
+        });
 
-      const reader = response.body?.getReader();
-      if (!reader) throw new Error('No response body');
+        if (!response.ok) throw new Error(`Search failed: ${response.status}`);
 
-      const decoder = new TextDecoder();
-      let buffer = '';
+        const reader = response.body?.getReader();
+        if (!reader) throw new Error('No response body');
 
-      while (true) {
-        const { done, value } = await reader.read();
-        if (done) break;
+        const decoder = new TextDecoder();
+        let buffer = '';
 
-        buffer += decoder.decode(value, { stream: true });
-        const lines = buffer.split('\n');
-        buffer = lines.pop() || '';
+        while (true) {
+          const { done, value } = await reader.read();
+          if (done) break;
 
-        for (const line of lines) {
-          if (line.startsWith('data: ')) {
-            const jsonStr = line.slice(6).trim();
-            if (jsonStr === '[DONE]') continue;
+          buffer += decoder.decode(value, { stream: true });
+          const lines = buffer.split('\n');
+          buffer = lines.pop() || '';
 
-            try {
-              const event = JSON.parse(jsonStr);
-              yield event;
-            } catch {
-              // Skip malformed
+          for (const line of lines) {
+            if (line.startsWith('data: ')) {
+              const jsonStr = line.slice(6).trim();
+              if (jsonStr === '[DONE]') continue;
+
+              try {
+                const event = JSON.parse(jsonStr);
+                yield event;
+              } catch {
+                // Skip malformed
+              }
             }
           }
         }
+
+        setSearchHistory((prev) => [searchQuery, ...prev.slice(0, 19)]);
+      } catch (err) {
+        const message = err instanceof Error ? err.message : 'Search failed';
+        setError(message);
+      } finally {
+        setIsSearching(false);
       }
+    },
+    [processQuery]
+  );
 
-      setSearchHistory((prev) => [searchQuery, ...prev.slice(0, 19)]);
-    } catch (err) {
-      const message = err instanceof Error ? err.message : 'Search failed';
-      setError(message);
-    } finally {
-      setIsSearching(false);
-    }
-  }, [processQuery]);
+  const trackClick = useCallback(
+    async (queryText: string, resultId: string, position: number) => {
+      if (!lastQueryId) return;
+      try {
+        await fetch(`${API_URL}/api/search/analytics/record-click`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            queryId: lastQueryId,
+            resultId,
+            position,
+          }),
+        });
+      } catch {
+        // Silent fail
+      }
+    },
+    [lastQueryId]
+  );
 
-  const trackClick = useCallback(async (queryId: string, resultId: string, position: number) => {
-    try {
-      await fetch(`${API_URL}/api/analytics/track`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ queryId, resultId, position }),
-      });
-    } catch {
-      // Silent fail for analytics
-    }
-  }, []);
-
-  const submitFeedback = useCallback(async (queryId: string, rating: 'positive' | 'negative', comment?: string) => {
-    try {
-      await fetch(`${API_URL}/api/analytics/feedback`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ queryId, rating, comment }),
-      });
-    } catch {
-      // Silent fail for feedback
-    }
-  }, []);
+  const submitFeedback = useCallback(
+    async (_queryId: string, rating: 'positive' | 'negative', comment?: string) => {
+      if (!lastQueryId) return;
+      try {
+        await fetch(`${API_URL}/api/search/analytics/record-feedback`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ queryId: lastQueryId, rating, comment }),
+        });
+      } catch {
+        // Silent fail
+      }
+    },
+    [lastQueryId]
+  );
 
   const loadAnalytics = useCallback(async () => {
     try {
@@ -194,6 +233,7 @@ export function useSearchEngine() {
     error,
     analytics,
     searchHistory,
+    lastQueryId,
     processQuery,
     search,
     searchWithStreaming,

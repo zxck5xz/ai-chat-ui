@@ -31,6 +31,7 @@ Frontend cho AI Chat — built với **Next.js 16** + **TypeScript** + **Tailwin
 | Code Review Bot               | ✅ Done |
 | Hybrid Search Dashboard       | ✅ Done |
 | Tool Agent (Function Calling) | ✅ Done |
+| Production Monitoring         | ✅ Done |
 
 ## Tech Stack
 
@@ -54,10 +55,10 @@ Frontend cho AI Chat — built với **Next.js 16** + **TypeScript** + **Tailwin
 │  │ Chat UI     │  │ Orchestrator│  │ Eval        │    │
 │  │ (Streaming) │  │ (Multi-Agent│  │ Dashboard   │    │
 │  └─────────────┘  └─────────────┘  └─────────────┘    │
-│  ┌─────────────┐  ┌─────────────┐                      │
-│  │ Code Review │  │ Hybrid      │                      │
-│  │ Bot         │  │ Search      │                      │
-│  └─────────────┘  └─────────────┘                      │
+│  ┌─────────────┐  ┌─────────────┐  ┌─────────────┐    │
+│  │ Code Review │  │ Hybrid      │  │ Monitoring  │    │
+│  │ Bot         │  │ Search      │  │ Dashboard   │    │
+│  └─────────────┘  └─────────────┘  └─────────────┘    │
 │                       │                                 │
 └───────────────────────┼─────────────────────────────────┘
                         │
@@ -75,6 +76,11 @@ Frontend cho AI Chat — built với **Next.js 16** + **TypeScript** + **Tailwin
 │  │ (Vectors)   │  │ (Agents)    │  │ Search      │    │
 │  └─────────────┘  └─────────────┘  │ (BM25+Vec)  │    │
 │                                     └─────────────┘    │
+│  ┌─────────────┐  ┌─────────────┐                      │
+│  │ Observability│  │ Monitoring  │                      │
+│  │ (Traces)    │  │ (Anomaly+   │                      │
+│  │             │  │  Drift)     │                      │
+│  └─────────────┘  └─────────────┘                      │
 └─────────────────────────────────────────────────────────┘
 ```
 
@@ -135,6 +141,15 @@ Frontend cho AI Chat — built với **Next.js 16** + **TypeScript** + **Tailwin
 - **Progress Bar**: Step count + tool call count progress
 - **Example Queries**: Pre-built examples (price comparison, calculations)
 - **4 Tools**: Web search (Jina), HTTP request, calculator, get current time
+
+### Production Monitoring
+
+- **System Health**: Real-time health status (healthy/degraded/critical)
+- **Anomaly Detection**: Z-score analysis, spike detection with severity badges
+- **Drift Detection**: Latency/cost/error rate/accuracy drift with direction indicators
+- **Alert Rules**: Create rules with severity, evaluation window, cooldown period
+- **One-click Evaluation**: Run full pipeline (snapshots → alerts → anomaly → drift)
+- **5 Tabs**: Overview, Anomalies, Drifts, Alert Rules, Evaluate
 
 ### UI/UX
 
@@ -208,6 +223,8 @@ ai-chat-ui/
 │   │   │   └── page.tsx                # Hybrid search page
 │   │   ├── tool-agent/
 │   │   │   └── page.tsx                # Tool agent page
+│   │   ├── monitoring/
+│   │   │   └── page.tsx                # Production monitoring page
 │   │   └── api/chat/
 │   │       └── route.ts                # Local API (fallback)
 │   ├── components/
@@ -229,17 +246,20 @@ ai-chat-ui/
 │   │   │   ├── design-spec-viewer.tsx   # Design spec display
 │   │   │   ├── code-viewer.tsx          # Code display with copy
 │   │   │   └── review-results.tsx       # Review scores display
-│   │   └── eval/
-│   │       ├── metrics-cards.tsx        # 8 metric cards
-│   │       ├── timeseries-chart.tsx     # Accuracy & latency charts
-│   │       ├── failure-cases-table.tsx  # Expandable failure cases
-│   │       ├── safety-gates.tsx         # Safety gates display
-│   │       ├── deploy-approvals.tsx     # Deploy approval requests
-│   │       └── eval-filters.tsx         # Model & date filters
-│   │   ├── tool-agent/
-│   │   │   ├── tool-agent-panel.tsx     # Main tool agent UI
-│   │   │   ├── reasoning-step.tsx       # Expandable reasoning step
-│   │   │   └── tool-call-card.tsx       # Tool call display
+│   │   ├── eval/
+│   │   │   ├── metrics-cards.tsx        # 8 metric cards
+│   │   │   ├── timeseries-chart.tsx     # Accuracy & latency charts
+│   │   │   ├── failure-cases-table.tsx  # Expandable failure cases
+│   │   │   ├── safety-gates.tsx         # Safety gates display
+│   │   │   ├── deploy-approvals.tsx     # Deploy approval requests
+│   │   │   └── eval-filters.tsx         # Model & date filters
+│   │   ├── monitoring/
+│   │   │   ├── anomaly-panel.tsx        # Anomaly list with severity
+│   │   │   └── drift-panel.tsx          # Drift list with direction
+│   │   └── tool-agent/
+│   │       ├── tool-agent-panel.tsx     # Main tool agent UI
+│   │       ├── reasoning-step.tsx       # Expandable reasoning step
+│   │       └── tool-call-card.tsx       # Tool call display
 │   ├── hooks/
 │   │   ├── use-chat.ts                 # Chat logic
 │   │   ├── use-abort.ts                # AbortController management
@@ -247,6 +267,7 @@ ai-chat-ui/
 │   │   ├── use-orchestrator.ts         # Orchestrator workflow state
 │   │   ├── use-eval-dashboard.ts       # Eval dashboard state
 │   │   ├── use-tool-agent.ts           # Tool agent state + SSE
+│   │   ├── use-monitoring.ts           # Monitoring state + API calls
 │   │   └── use-keyboard-shortcuts.ts   # Keyboard shortcuts
 │   ├── lib/
 │   │   ├── ai.ts                       # System prompt + config
@@ -258,7 +279,8 @@ ai-chat-ui/
 │       ├── eval.ts                     # Eval types
 │       ├── code-review.ts              # Code review types
 │       ├── hybrid-search.ts            # Hybrid search types
-│       └── tool-agent.ts               # Tool agent types
+│       ├── tool-agent.ts               # Tool agent types
+│       └── monitoring.ts               # Monitoring types
 ├── .env.example                        # Environment template
 ├── components.json                     # shadcn/ui config
 ├── next.config.ts                      # Next.js config
@@ -291,6 +313,16 @@ await rejectTask();
 const { metrics, timeseries, failures, gates, fetchMetrics, fetchTimeseries } = useEvalDashboard();
 await fetchMetrics({ model_version: 'gemini-3.6-flash' });
 await fetchTimeseries({ days: 30 });
+```
+
+### `useMonitoring`
+
+```typescript
+const { overview, anomalies, drifts, rules, fetchOverview, runEvaluation, detectDrifts } =
+  useMonitoring();
+await fetchOverview(7);
+const result = await runEvaluation();
+await detectDrifts('gemini-3.6-flash', 7);
 ```
 
 ## Roadmap

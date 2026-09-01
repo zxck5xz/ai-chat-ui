@@ -2,16 +2,17 @@
 
 import { Card } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { ExternalLink, ThumbsUp, ThumbsDown, ChevronDown, ChevronUp } from 'lucide-react';
+import { ThumbsUp, ThumbsDown, ChevronDown, ChevronUp } from 'lucide-react';
 import { useState } from 'react';
 import type { SearchResult } from '@/types/search-engine';
 
 interface SearchResultsProps {
   results: SearchResult[];
   onFeedback?: (resultId: string, rating: 'positive' | 'negative') => void;
+  onResultClick?: (resultId: string, position: number) => void;
 }
 
-export function SearchResults({ results, onFeedback }: SearchResultsProps) {
+export function SearchResults({ results, onFeedback, onResultClick }: SearchResultsProps) {
   if (results.length === 0) {
     return (
       <div className="text-center py-12 text-gray-400">
@@ -28,29 +29,42 @@ export function SearchResults({ results, onFeedback }: SearchResultsProps) {
           result={result}
           position={index + 1}
           onFeedback={onFeedback}
+          onResultClick={onResultClick}
         />
       ))}
     </div>
   );
 }
 
-function ResultCard({ result, position, onFeedback }: {
+function ResultCard({
+  result,
+  position,
+  onFeedback,
+  onResultClick,
+}: {
   result: SearchResult;
   position: number;
   onFeedback?: (resultId: string, rating: 'positive' | 'negative') => void;
+  onResultClick?: (resultId: string, position: number) => void;
 }) {
   const [expanded, setExpanded] = useState(false);
   const [feedback, setFeedback] = useState<'positive' | 'negative' | null>(null);
 
-  const scoreColor = result.score > 0.8
-    ? 'text-green-400'
-    : result.score > 0.5
-    ? 'text-yellow-400'
-    : 'text-gray-400';
+  const scoreColor =
+    result.score > 0.8
+      ? 'text-green-400'
+      : result.score > 0.5
+        ? 'text-yellow-400'
+        : 'text-gray-400';
 
   const handleFeedback = (rating: 'positive' | 'negative') => {
     setFeedback(rating);
     onFeedback?.(result.id, rating);
+  };
+
+  const handleContentClick = () => {
+    setExpanded(!expanded);
+    onResultClick?.(result.id, position);
   };
 
   return (
@@ -76,13 +90,8 @@ function ResultCard({ result, position, onFeedback }: {
           </div>
 
           {/* Content Preview */}
-          <div
-            className="text-sm text-gray-300 cursor-pointer"
-            onClick={() => setExpanded(!expanded)}
-          >
-            <p className={expanded ? '' : 'line-clamp-2'}>
-              {result.highlight || result.content}
-            </p>
+          <div className="text-sm text-gray-300 cursor-pointer" onClick={handleContentClick}>
+            <p className={expanded ? '' : 'line-clamp-2'}>{result.highlight || result.content}</p>
             <button className="text-xs text-gray-500 hover:text-gray-400 mt-1 flex items-center gap-1">
               {expanded ? <ChevronUp size={12} /> : <ChevronDown size={12} />}
               {expanded ? 'Show less' : 'Show more'}

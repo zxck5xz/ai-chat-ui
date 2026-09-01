@@ -2,7 +2,7 @@
 
 import { useState, useCallback } from 'react';
 import Link from 'next/link';
-import { ArrowLeft, Sparkles } from 'lucide-react';
+import { ArrowLeft, Sparkles, BarChart3 } from 'lucide-react';
 import { SearchBar } from '@/components/search-engine/search-bar';
 import { SearchResults } from '@/components/search-engine/search-results';
 import { QueryInfo } from '@/components/search-engine/query-info';
@@ -10,7 +10,6 @@ import { useSearchEngine } from '@/hooks/use-search-engine';
 
 export default function SearchPage() {
   const {
-    query,
     queryInfo,
     results,
     isSearching,
@@ -24,17 +23,26 @@ export default function SearchPage() {
 
   const [showQueryInfo, setShowQueryInfo] = useState(false);
 
-  const handleSearch = useCallback(async (q: string) => {
-    await search(q);
-  }, [search]);
+  const handleSearch = useCallback(
+    async (q: string) => {
+      await search(q);
+    },
+    [search]
+  );
 
-  const handleResultClick = useCallback((resultId: string, position: number) => {
-    trackClick(queryInfo?.classified.originalQuery || '', resultId, position);
-  }, [trackClick, queryInfo]);
+  const handleResultClick = useCallback(
+    (resultId: string, position: number) => {
+      trackClick(queryInfo?.classified.originalQuery || '', resultId, position);
+    },
+    [trackClick, queryInfo]
+  );
 
-  const handleFeedback = useCallback((resultId: string, rating: 'positive' | 'negative') => {
-    submitFeedback(queryInfo?.classified.originalQuery || '', rating);
-  }, [submitFeedback, queryInfo]);
+  const handleFeedback = useCallback(
+    (resultId: string, rating: 'positive' | 'negative') => {
+      submitFeedback(queryInfo?.classified.originalQuery || '', rating);
+    },
+    [submitFeedback, queryInfo]
+  );
 
   return (
     <div className="min-h-screen bg-gray-950 text-white">
@@ -45,7 +53,15 @@ export default function SearchPage() {
             <ArrowLeft size={20} />
           </Link>
           <Sparkles size={20} className="text-blue-400" />
-          <h1 className="text-lg font-semibold">AI Search Engine</h1>
+          <h1 className="text-lg font-semibold flex-1">AI Search Engine</h1>
+          <Link
+            href="/search/analytics"
+            className="text-gray-400 hover:text-white flex items-center gap-1 text-sm"
+            title="Search analytics"
+          >
+            <BarChart3 size={16} />
+            Analytics
+          </Link>
         </div>
       </header>
 
@@ -118,6 +134,7 @@ export default function SearchPage() {
             <SearchResults
               results={results}
               onFeedback={handleFeedback}
+              onResultClick={handleResultClick}
             />
           </div>
         )}
@@ -132,7 +149,9 @@ export default function SearchPage() {
             <div className="mt-6 grid grid-cols-2 gap-3 max-w-md mx-auto text-left">
               <div className="bg-gray-900 rounded-lg p-3 text-xs">
                 <div className="text-blue-400 font-medium mb-1">Query Classification</div>
-                <div className="text-gray-400">Automatically routes simple, moderate, and complex queries</div>
+                <div className="text-gray-400">
+                  Automatically routes simple, moderate, and complex queries
+                </div>
               </div>
               <div className="bg-gray-900 rounded-lg p-3 text-xs">
                 <div className="text-purple-400 font-medium mb-1">Multi-Query Expansion</div>
@@ -140,11 +159,15 @@ export default function SearchPage() {
               </div>
               <div className="bg-gray-900 rounded-lg p-3 text-xs">
                 <div className="text-green-400 font-medium mb-1">HyDE</div>
-                <div className="text-gray-400">Hypothetical Document Embeddings for sparse queries</div>
+                <div className="text-gray-400">
+                  Hypothetical Document Embeddings for sparse queries
+                </div>
               </div>
               <div className="bg-gray-900 rounded-lg p-3 text-xs">
                 <div className="text-yellow-400 font-medium mb-1">Decomposition</div>
-                <div className="text-gray-400">Breaks complex questions into atomic sub-queries</div>
+                <div className="text-gray-400">
+                  Breaks complex questions into atomic sub-queries
+                </div>
               </div>
             </div>
           </div>

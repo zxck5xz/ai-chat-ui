@@ -21,6 +21,8 @@ import {
   Eye,
   FlaskConical,
   Mic,
+  Type,
+  Shield,
 } from 'lucide-react';
 import { useEffect, useCallback, useState, useRef, useMemo } from 'react';
 import { DocumentUpload } from './document-upload';
@@ -226,6 +228,14 @@ export function ChatInterface() {
           </Link>
         </div>
         <div className="p-2">
+          <Link href="/monitoring">
+            <Button variant="outline" className="w-full flex items-center gap-2">
+              <Shield size={16} className="text-orange-500" />
+              Monitoring
+            </Button>
+          </Link>
+        </div>
+        <div className="p-2">
           <Link href="/fine-tuning">
             <Button variant="outline" className="w-full flex items-center gap-2">
               <FlaskConical size={16} className="text-emerald-500" />
@@ -246,6 +256,14 @@ export function ChatInterface() {
             <Button variant="outline" className="w-full flex items-center gap-2">
               <Sparkles size={16} className="text-purple-400" />
               Multi-Modal AI
+            </Button>
+          </Link>
+        </div>
+        <div className="p-2">
+          <Link href="/image-text">
+            <Button variant="outline" className="w-full flex items-center gap-2">
+              <Type size={16} className="text-emerald-400" />
+              Text Replacement
             </Button>
           </Link>
         </div>
