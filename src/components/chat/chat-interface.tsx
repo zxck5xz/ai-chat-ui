@@ -23,6 +23,8 @@ import {
   Mic,
   Type,
   Shield,
+  Link as LinkIcon,
+  GitBranch,
 } from 'lucide-react';
 import { useEffect, useCallback, useState, useRef, useMemo } from 'react';
 import { DocumentUpload } from './document-upload';
@@ -272,6 +274,22 @@ export function ChatInterface() {
             <Button variant="outline" className="w-full flex items-center gap-2">
               <Search size={16} className="text-blue-400" />
               AI Search
+            </Button>
+          </Link>
+        </div>
+        <div className="p-2">
+          <Link href="/mcp">
+            <Button variant="outline" className="w-full flex items-center gap-2">
+              <LinkIcon size={16} className="text-cyan-500" />
+              MCP Dashboard
+            </Button>
+          </Link>
+        </div>
+        <div className="p-2">
+          <Link href="/model-versioning">
+            <Button variant="outline" className="w-full flex items-center gap-2">
+              <GitBranch size={16} className="text-violet-500" />
+              Model Versioning
             </Button>
           </Link>
         </div>

@@ -25,6 +25,9 @@ export function TextRegionSelector({
   const containerRef = useRef<HTMLDivElement>(null);
   const [editingRegion, setEditingRegion] = useState<string | null>(null);
   const [editText, setEditText] = useState('');
+  const [imageDimensions, setImageDimensions] = useState<{ width: number; height: number } | null>(
+    null
+  );
 
   const handleRegionClick = useCallback(
     (region: TextRegion) => {
