@@ -25,6 +25,7 @@ import {
   Shield,
   Link as LinkIcon,
   GitBranch,
+  Layers,
 } from 'lucide-react';
 import { useEffect, useCallback, useState, useRef, useMemo } from 'react';
 import { DocumentUpload } from './document-upload';
@@ -258,6 +259,14 @@ export function ChatInterface() {
             <Button variant="outline" className="w-full flex items-center gap-2">
               <Sparkles size={16} className="text-purple-400" />
               Multi-Modal AI
+            </Button>
+          </Link>
+        </div>
+        <div className="p-2">
+          <Link href="/cross-modal-search">
+            <Button variant="outline" className="w-full flex items-center gap-2">
+              <Layers size={16} className="text-cyan-400" />
+              Cross-Modal RAG
             </Button>
           </Link>
         </div>
