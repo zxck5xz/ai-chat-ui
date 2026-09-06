@@ -18,13 +18,13 @@ import {
   Code,
   Search,
   Wrench,
+  GitBranch,
   Eye,
   FlaskConical,
   Mic,
   Type,
   Shield,
   Link as LinkIcon,
-  GitBranch,
   Layers,
 } from 'lucide-react';
 import { useEffect, useCallback, useState, useRef, useMemo } from 'react';
@@ -187,6 +187,14 @@ export function ChatInterface() {
             <Button variant="outline" className="w-full flex items-center gap-2">
               <Sparkles size={16} className="text-violet-500" />
               Multi-Agent Orchestrator
+            </Button>
+          </Link>
+        </div>
+        <div className="p-2">
+          <Link href="/langgraph">
+            <Button variant="outline" className="w-full flex items-center gap-2">
+              <GitBranch size={16} className="text-cyan-500" />
+              LangGraph Multi-Agent
             </Button>
           </Link>
         </div>
