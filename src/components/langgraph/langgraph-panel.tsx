@@ -129,7 +129,7 @@ export function LangGraphPanel() {
                       </span>
                     </div>
                     <div className="flex items-center gap-3 text-xs text-muted-foreground">
-                      <span>{run.trace.totalDuration}ms</span>
+                      <span>{run.trace?.totalDuration ?? 0}ms</span>
                       <span>{new Date(run.createdAt).toLocaleTimeString()}</span>
                     </div>
                   </div>

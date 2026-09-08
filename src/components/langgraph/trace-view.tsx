@@ -4,10 +4,12 @@ import type { LangGraphTrace, LangGraphNode } from '@/types/langgraph';
 import { CheckCircle, XCircle, Clock } from 'lucide-react';
 
 interface Props {
-  trace: LangGraphTrace;
+  trace?: LangGraphTrace;
 }
 
 export function TraceView({ trace }: Props) {
+  if (!trace) return null;
+
   return (
     <div className="space-y-3">
       <div className="flex items-center justify-between">
@@ -20,7 +22,7 @@ export function TraceView({ trace }: Props) {
         <div className="absolute left-4 top-0 bottom-0 w-px bg-border" />
 
         <div className="space-y-1">
-          {trace.nodes.map((node, i) => (
+          {(trace.nodes || []).map((node, i) => (
             <TraceNode key={i} node={node} index={i} total={trace.nodes.length} />
           ))}
         </div>

@@ -29,9 +29,13 @@ export function ResultView({ run }: Props) {
         <MetricCard
           icon={<Clock size={16} />}
           label="Duration"
-          value={`${run.trace.totalDuration}ms`}
+          value={`${run.trace?.totalDuration ?? 0}ms`}
         />
-        <MetricCard icon={<Cpu size={16} />} label="Nodes" value={`${run.trace.nodes.length}`} />
+        <MetricCard
+          icon={<Cpu size={16} />}
+          label="Nodes"
+          value={`${run.trace?.nodes?.length ?? 0}`}
+        />
         <MetricCard
           icon={<DollarSign size={16} />}
           label="Cost"

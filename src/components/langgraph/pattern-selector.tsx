@@ -39,7 +39,7 @@ export function PatternSelector({ patterns, selected, onSelect }: Props) {
           </div>
           <p className="text-xs text-muted-foreground line-clamp-2">{p.description}</p>
           <div className="mt-2 flex flex-wrap gap-1">
-            {p.agents.map((a) => (
+            {(p.agents || []).map((a) => (
               <span
                 key={a}
                 className="text-[10px] px-1.5 py-0.5 rounded bg-muted text-muted-foreground"
