@@ -26,6 +26,7 @@ import {
   Shield,
   Link as LinkIcon,
   Layers,
+  Brain,
 } from 'lucide-react';
 import { useEffect, useCallback, useState, useRef, useMemo } from 'react';
 import { DocumentUpload } from './document-upload';
@@ -307,6 +308,14 @@ export function ChatInterface() {
             <Button variant="outline" className="w-full flex items-center gap-2">
               <GitBranch size={16} className="text-violet-500" />
               Model Versioning
+            </Button>
+          </Link>
+        </div>
+        <div className="p-2">
+          <Link href="/agentic-rag">
+            <Button variant="outline" className="w-full flex items-center gap-2">
+              <Brain size={16} className="text-indigo-500" />
+              Agentic RAG
             </Button>
           </Link>
         </div>

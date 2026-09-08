@@ -48,7 +48,9 @@ export default function EvalDashboard() {
 
     // Fetch models list
     try {
-      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8787'}/api/eval/models`);
+      const response = await fetch(
+        `${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8787'}/api/eval/models`
+      );
       if (response.ok) {
         const data = await response.json();
         setModels(data.models || []);
@@ -58,8 +60,8 @@ export default function EvalDashboard() {
     }
   }, [selectedModel, startDate, endDate, fetchMetrics, fetchTimeseries, fetchFailures, fetchGates]);
 
-  // eslint-disable-next-line react-hooks/set-state-in-effect
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     loadData();
   }, [loadData]);
 
@@ -101,7 +103,7 @@ export default function EvalDashboard() {
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         <TimeseriesChart data={timeseries} loading={loading} />
-        <SafetyGates gates={gates} gateCheckResult={gateCheckResult} />
+        <SafetyGates gates={gates} gateCheckResult={null} />
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
