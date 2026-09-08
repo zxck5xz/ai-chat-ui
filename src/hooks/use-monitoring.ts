@@ -31,7 +31,10 @@ export function useMonitoring() {
     setError(null);
     try {
       const res = await fetch(`${API_URL}/api/monitoring/overview?days=${days}`);
-      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      if (!res.ok) {
+        const body = await res.json().catch(() => null);
+        throw new Error(body?.details || body?.error || `HTTP ${res.status}`);
+      }
       setOverview(await res.json());
     } catch (err) {
       setError(err instanceof Error ? err.message : String(err));
@@ -50,7 +53,10 @@ export function useMonitoring() {
         if (params?.acknowledged !== undefined)
           query.set('acknowledged', String(params.acknowledged));
         const res = await fetch(`${API_URL}/api/monitoring/anomalies?${query.toString()}`);
-        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+        if (!res.ok) {
+          const body = await res.json().catch(() => null);
+          throw new Error(body?.details || body?.error || `HTTP ${res.status}`);
+        }
         const data = await res.json();
         setAnomalies(data.events || []);
       } catch (err) {
@@ -76,7 +82,10 @@ export function useMonitoring() {
         if (params?.acknowledged !== undefined)
           query.set('acknowledged', String(params.acknowledged));
         const res = await fetch(`${API_URL}/api/monitoring/drifts?${query.toString()}`);
-        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+        if (!res.ok) {
+          const body = await res.json().catch(() => null);
+          throw new Error(body?.details || body?.error || `HTTP ${res.status}`);
+        }
         const data = await res.json();
         setDrifts(data.events || []);
       } catch (err) {
