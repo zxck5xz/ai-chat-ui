@@ -11,28 +11,14 @@ interface ImageUploaderProps {
   disabled?: boolean;
 }
 
-export function ImageUploader({ onImageSelect, multiple = false, maxFiles = 5, disabled }: ImageUploaderProps) {
+export function ImageUploader({
+  onImageSelect,
+  multiple = false,
+  maxFiles = 5,
+  disabled,
+}: ImageUploaderProps) {
   const inputRef = useRef<HTMLInputElement>(null);
   const [previews, setPreviews] = useState<{ url: string; name: string }[]>([]);
-
-  const handleFiles = useCallback(async (fileList: FileList) => {
-    const files: { base64: string; mimeType: string; name: string }[] = [];
-    const newPreviews: { url: string; name: string }[] = [];
-
-    const limit = Math.min(fileList.length, multiple ? maxFiles : 1);
-
-    for (let i = 0; i < limit; i++) {
-      const file = fileList[i];
-      if (!file.type.startsWith('image/')) continue;
-
-      const base64 = await fileToBase64(file);
-      files.push({ base64, mimeType: file.type, name: file.name });
-      newPreviews.push({ url: URL.createObjectURL(file), name: file.name });
-    }
-
-    setPreviews(newPreviews);
-    onImageSelect(files);
-  }, [multiple, maxFiles, onImageSelect]);
 
   const fileToBase64 = (file: File): Promise<string> => {
     return new Promise((resolve) => {
@@ -44,6 +30,28 @@ export function ImageUploader({ onImageSelect, multiple = false, maxFiles = 5, d
       reader.readAsDataURL(file);
     });
   };
+
+  const handleFiles = useCallback(
+    async (fileList: FileList) => {
+      const files: { base64: string; mimeType: string; name: string }[] = [];
+      const newPreviews: { url: string; name: string }[] = [];
+
+      const limit = Math.min(fileList.length, multiple ? maxFiles : 1);
+
+      for (let i = 0; i < limit; i++) {
+        const file = fileList[i];
+        if (!file.type.startsWith('image/')) continue;
+
+        const base64 = await fileToBase64(file);
+        files.push({ base64, mimeType: file.type, name: file.name });
+        newPreviews.push({ url: URL.createObjectURL(file), name: file.name });
+      }
+
+      setPreviews(newPreviews);
+      onImageSelect(files);
+    },
+    [multiple, maxFiles, onImageSelect, fileToBase64]
+  );
 
   const clearPreviews = () => {
     previews.forEach((p) => URL.revokeObjectURL(p.url));
@@ -76,7 +84,11 @@ export function ImageUploader({ onImageSelect, multiple = false, maxFiles = 5, d
         <div className="flex gap-2 flex-wrap">
           {previews.map((p, i) => (
             <div key={i} className="relative group">
-              <img src={p.url} alt={p.name} className="w-20 h-20 object-cover rounded border border-gray-700" />
+              <img
+                src={p.url}
+                alt={p.name}
+                className="w-20 h-20 object-cover rounded border border-gray-700"
+              />
               <span className="absolute bottom-0 left-0 right-0 bg-black/70 text-[10px] text-center truncate px-1">
                 {p.name}
               </span>
@@ -85,7 +97,10 @@ export function ImageUploader({ onImageSelect, multiple = false, maxFiles = 5, d
           <Button
             variant="outline"
             size="sm"
-            onClick={() => { clearPreviews(); onImageSelect([]); }}
+            onClick={() => {
+              clearPreviews();
+              onImageSelect([]);
+            }}
             className="w-20 h-20"
           >
             <X size={16} />

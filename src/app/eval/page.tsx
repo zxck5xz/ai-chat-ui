@@ -1,6 +1,6 @@
 'use client';
 
-import { useCallback, useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useEvalDashboard } from '@/hooks/use-eval-dashboard';
 import { MetricsCards } from '@/components/eval/metrics-cards';
 import { TimeseriesChart } from '@/components/eval/timeseries-chart';
@@ -32,38 +32,36 @@ export default function EvalDashboard() {
   const [endDate, setEndDate] = useState<Date | undefined>(undefined);
   const [models, setModels] = useState<string[]>([]);
 
-  const loadData = useCallback(async () => {
-    const params = {
-      model_version: selectedModel === 'all' ? undefined : selectedModel,
-      start_date: startDate?.toISOString(),
-      end_date: endDate?.toISOString(),
-    };
+  const buildParams = () => ({
+    model_version: selectedModel === 'all' ? undefined : selectedModel,
+    start_date: startDate?.toISOString(),
+    end_date: endDate?.toISOString(),
+  });
 
-    await Promise.all([
-      fetchMetrics(params),
-      fetchTimeseries({ model_version: params.model_version, days: 30 }),
-      fetchFailures(params.model_version),
-      fetchGates(),
-    ]);
+  const refreshDashboard = () => {
+    const params = buildParams();
+    fetchMetrics(params);
+    fetchTimeseries({ model_version: params.model_version, days: 30 });
+    fetchFailures(params.model_version);
+    fetchGates();
+  };
 
-    // Fetch models list
-    try {
-      const response = await fetch(
-        `${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8787'}/api/eval/models`
-      );
-      if (response.ok) {
-        const data = await response.json();
-        setModels(data.models || []);
-      }
-    } catch {
-      // Ignore error
-    }
-  }, [selectedModel, startDate, endDate, fetchMetrics, fetchTimeseries, fetchFailures, fetchGates]);
-
+  // Fetch models list once on mount
   useEffect(() => {
-    // eslint-disable-next-line react-hooks/set-state-in-effect
-    loadData();
-  }, [loadData]);
+    const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8787';
+    fetch(`${API_URL}/api/eval/models`)
+      .then((res) => (res.ok ? res.json() : null))
+      .then((data) => {
+        if (data?.models) setModels(data.models);
+      })
+      .catch(() => {});
+  }, []);
+
+  // Refetch dashboard when filters change
+  useEffect(() => {
+    refreshDashboard();
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- refreshDashboard is stable per filter change
+  }, [selectedModel, startDate, endDate]);
 
   return (
     <div className="container mx-auto p-6 space-y-6">
@@ -76,7 +74,7 @@ export default function EvalDashboard() {
         </div>
         <div className="flex items-center gap-2">
           <HelpButton feature="eval" />
-          <Button onClick={loadData} disabled={loading}>
+          <Button onClick={refreshDashboard} disabled={loading}>
             <RefreshCw className={`h-4 w-4 mr-2 ${loading ? 'animate-spin' : ''}`} />
             Refresh
           </Button>

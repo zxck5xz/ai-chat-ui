@@ -9,7 +9,10 @@ interface QueryInfoProps {
   info: QueryUnderstandingResult;
 }
 
-const COMPLEXITY_CONFIG: Record<QueryComplexity, { label: string; color: string; icon: any }> = {
+const COMPLEXITY_CONFIG: Record<
+  QueryComplexity,
+  { label: string; color: string; icon: typeof Zap }
+> = {
   simple: { label: 'Simple', color: 'text-green-400 bg-green-400/10', icon: Zap },
   moderate: { label: 'Moderate', color: 'text-blue-400 bg-blue-400/10', icon: Brain },
   complex: { label: 'Complex', color: 'text-purple-400 bg-purple-400/10', icon: GitBranch },
@@ -47,7 +50,9 @@ export function QueryInfo({ info }: QueryInfoProps) {
         </div>
         <div>
           <span className="text-gray-500">Strategy</span>
-          <div className="text-white">{STRATEGY_LABELS[expanded.strategy] || expanded.strategy}</div>
+          <div className="text-white">
+            {STRATEGY_LABELS[expanded.strategy] || expanded.strategy}
+          </div>
         </div>
       </div>
 
@@ -99,9 +104,7 @@ export function QueryInfo({ info }: QueryInfoProps) {
       )}
 
       {/* Latency */}
-      <div className="text-[10px] text-gray-600">
-        Processing: {info.totalLatencyMs}ms
-      </div>
+      <div className="text-[10px] text-gray-600">Processing: {info.totalLatencyMs}ms</div>
     </Card>
   );
 }

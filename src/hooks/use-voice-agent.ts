@@ -1,7 +1,12 @@
 'use client';
 
-import { useState, useRef, useCallback } from 'react';
-import type { TranscriptEntry, VoiceEvent, VoiceSession, VoiceSessionStatus } from '@/types/voice-agent';
+import { useState, useRef, useCallback, useEffect } from 'react';
+import type {
+  TranscriptEntry,
+  VoiceEvent,
+  VoiceSession,
+  VoiceSessionStatus,
+} from '@/types/voice-agent';
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'https://ai-chat-api.ai-chat-api.workers.dev';
 
@@ -30,6 +35,7 @@ export function useVoiceAgent() {
   const audioDataRef = useRef<Float32Array | null>(null);
   const abortControllerRef = useRef<AbortController | null>(null);
   const audioElementsRef = useRef<HTMLAudioElement[]>([]);
+  const runPipelineRef = useRef<(audioBase64: string) => Promise<void>>(async () => {});
 
   const startRecording = useCallback(async () => {
     try {
@@ -101,7 +107,7 @@ export function useVoiceAgent() {
 
       const audioBase64 = audioChunksRef.current[0];
       audioChunksRef.current = [];
-      await runPipeline(audioBase64);
+      await runPipelineRef.current(audioBase64);
     }
   }, [isRecording]);
 
@@ -217,50 +223,56 @@ export function useVoiceAgent() {
           }),
         });
 
-      if (!response.ok) {
-        throw new Error(`Voice agent error: ${response.status}`);
-      }
+        if (!response.ok) {
+          throw new Error(`Voice agent error: ${response.status}`);
+        }
 
-      const reader = response.body?.getReader();
-      if (!reader) throw new Error('No response body');
+        const reader = response.body?.getReader();
+        if (!reader) throw new Error('No response body');
 
-      const decoder = new TextDecoder();
-      let buffer = '';
+        const decoder = new TextDecoder();
+        let buffer = '';
 
-      while (true) {
-        const { done, value } = await reader.read();
-        if (done) break;
+        while (true) {
+          const { done, value } = await reader.read();
+          if (done) break;
 
-        buffer += decoder.decode(value, { stream: true });
-        const lines = buffer.split('\n');
-        buffer = lines.pop() || '';
+          buffer += decoder.decode(value, { stream: true });
+          const lines = buffer.split('\n');
+          buffer = lines.pop() || '';
 
-        for (const line of lines) {
-          if (line.startsWith('data: ')) {
-            try {
-              const jsonStr = line.slice(6).trim();
-              if (jsonStr === '[DONE]') continue;
+          for (const line of lines) {
+            if (line.startsWith('data: ')) {
+              try {
+                const jsonStr = line.slice(6).trim();
+                if (jsonStr === '[DONE]') continue;
 
-              const event: VoiceEvent = JSON.parse(jsonStr);
-              handleEvent(event, startTime);
-            } catch {
-              // Skip malformed lines
+                const event: VoiceEvent = JSON.parse(jsonStr);
+                handleEvent(event, startTime);
+              } catch {
+                // Skip malformed lines
+              }
             }
           }
         }
-      }
 
-      setIsProcessing(false);
-    } catch (err: any) {
-      if (err?.name === 'AbortError') {
-        // Interrupted - cleanup already handled by interrupt()
-        return;
+        setIsProcessing(false);
+      } catch (err: unknown) {
+        if (err && typeof err === 'object' && 'name' in err && err.name === 'AbortError') {
+          // Interrupted - cleanup already handled by interrupt()
+          return;
+        }
+        setError(err instanceof Error ? err.message : 'Pipeline failed');
+        setStatus('failed');
+        setIsProcessing(false);
       }
-      setError(err instanceof Error ? err.message : 'Pipeline failed');
-      setStatus('failed');
-      setIsProcessing(false);
-    }
-  }, [transcript]);
+    },
+    [transcript, handleEvent]
+  );
+
+  useEffect(() => {
+    runPipelineRef.current = runPipeline;
+  }, [runPipeline]);
 
   const interrupt = useCallback(async () => {
     // Stop recording if active
