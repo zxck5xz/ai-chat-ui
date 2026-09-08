@@ -74,7 +74,10 @@ export function useMCPClient() {
     setError(null);
     try {
       const res = await fetch(`${API_BASE}/api/mcp/client/servers`);
-      if (!res.ok) throw new Error('Failed to fetch servers');
+      if (!res.ok) {
+        const body = await res.json().catch(() => null);
+        throw new Error(body?.details || body?.error || `HTTP ${res.status}`);
+      }
       const data = await res.json();
       setServers(data.servers || []);
     } catch (err) {
@@ -149,7 +152,10 @@ export function useMCPClient() {
     setError(null);
     try {
       const res = await fetch(`${API_BASE}/api/mcp/client/tools`);
-      if (!res.ok) throw new Error('Failed to fetch tools');
+      if (!res.ok) {
+        const body = await res.json().catch(() => null);
+        throw new Error(body?.details || body?.error || `HTTP ${res.status}`);
+      }
       const data = await res.json();
       setRemoteTools(data.tools || []);
     } catch (err) {
@@ -192,7 +198,10 @@ export function useMCPClient() {
       const params = new URLSearchParams();
       if (serverId) params.set('serverId', serverId);
       const res = await fetch(`${API_BASE}/api/mcp/client/log?${params}`);
-      if (!res.ok) throw new Error('Failed to fetch log');
+      if (!res.ok) {
+        const body = await res.json().catch(() => null);
+        throw new Error(body?.details || body?.error || `HTTP ${res.status}`);
+      }
       const data = await res.json();
       setCallLog(data.log || []);
     } catch (err) {
@@ -207,9 +216,12 @@ export function useMCPClient() {
     setError(null);
     try {
       const res = await fetch(`${API_BASE}/api/mcp/client/stats`);
-      if (!res.ok) throw new Error('Failed to fetch stats');
+      if (!res.ok) {
+        const body = await res.json().catch(() => null);
+        throw new Error(body?.details || body?.error || `HTTP ${res.status}`);
+      }
       const data = await res.json();
-      setStats(data.stats);
+      setStats(data.stats || null);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Unknown error');
     } finally {
