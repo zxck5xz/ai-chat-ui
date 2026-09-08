@@ -16,7 +16,7 @@ export function useLangGraph() {
     try {
       const res = await fetch(`${API_URL}/api/langgraph/patterns`);
       const data = await res.json();
-      setPatterns(data.patterns);
+      setPatterns(data.patterns || []);
     } catch (err) {
       setError(err instanceof Error ? err.message : String(err));
     }
@@ -26,7 +26,7 @@ export function useLangGraph() {
     try {
       const res = await fetch(`${API_URL}/api/langgraph/runs`);
       const data = await res.json();
-      setRuns(data.runs);
+      setRuns(data.runs || []);
     } catch (err) {
       setError(err instanceof Error ? err.message : String(err));
     }
