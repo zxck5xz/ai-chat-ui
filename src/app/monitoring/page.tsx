@@ -19,6 +19,7 @@ import {
   Bell,
   BellOff,
 } from 'lucide-react';
+import { HelpButton } from '@/components/shared';
 import type { AlertRule, AlertEvent, EvaluationResult, DriftResult } from '@/types/monitoring';
 
 type Tab = 'overview' | 'anomalies' | 'drifts' | 'rules' | 'evaluate';
@@ -102,7 +103,8 @@ export default function MonitoringDashboard() {
           <h1 className="text-3xl font-bold">Production Monitoring</h1>
           <p className="text-muted-foreground">Anomaly detection, drift monitoring, and alerting</p>
         </div>
-        <div className="flex gap-2">
+        <div className="flex items-center gap-2">
+          <HelpButton feature="monitoring" />
           <Button onClick={handleRunEvaluation} disabled={loading}>
             <Play className={`h-4 w-4 mr-2 ${loading ? 'animate-spin' : ''}`} />
             Run Evaluation

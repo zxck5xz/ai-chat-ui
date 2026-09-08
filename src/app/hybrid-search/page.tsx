@@ -9,6 +9,7 @@ import { ChunkingComparison } from '@/components/hybrid-search/chunking-comparis
 import { SearchComparison } from '@/components/hybrid-search/search-comparison';
 import { EvalMetrics } from '@/components/hybrid-search/eval-metrics';
 import { ABTesting } from '@/components/hybrid-search/ab-testing';
+import { HelpButton } from '@/components/shared';
 
 export default function HybridSearchPage() {
   return (
@@ -20,9 +21,12 @@ export default function HybridSearchPage() {
             BM25 + Vector search, re-ranking, chunking strategies, and evaluation
           </p>
         </div>
-        <Link href="/">
-          <Button variant="outline">Back to Chat</Button>
-        </Link>
+        <div className="flex items-center gap-2">
+          <HelpButton feature="hybrid-search" />
+          <Link href="/">
+            <Button variant="outline">Back to Chat</Button>
+          </Link>
+        </div>
       </div>
 
       <Tabs defaultValue="chunking" className="space-y-6">

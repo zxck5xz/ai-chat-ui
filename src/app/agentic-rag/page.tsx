@@ -1,12 +1,12 @@
 'use client';
 
-import { ToolAgentPanel } from '@/components/tool-agent';
+import { AgenticRAGPanel } from '@/components/agentic-rag';
 import { Button } from '@/components/ui/button';
 import { ArrowLeft } from 'lucide-react';
 import Link from 'next/link';
 import { HelpButton } from '@/components/shared';
 
-export default function ToolAgentPage() {
+export default function AgenticRAGPage() {
   return (
     <div className="min-h-screen bg-background p-4 md:p-8">
       <div className="max-w-4xl mx-auto mb-6 flex items-center justify-between">
@@ -16,9 +16,9 @@ export default function ToolAgentPage() {
             Back to Chat
           </Button>
         </Link>
-        <HelpButton feature="tool-agent" />
+        <HelpButton feature="agentic-rag" />
       </div>
-      <ToolAgentPanel />
+      <AgenticRAGPanel />
     </div>
   );
 }

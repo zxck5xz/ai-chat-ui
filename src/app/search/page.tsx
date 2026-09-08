@@ -3,6 +3,7 @@
 import { useState, useCallback } from 'react';
 import Link from 'next/link';
 import { ArrowLeft, Sparkles, BarChart3 } from 'lucide-react';
+import { HelpButton } from '@/components/shared';
 import { SearchBar } from '@/components/search-engine/search-bar';
 import { SearchResults } from '@/components/search-engine/search-results';
 import { QueryInfo } from '@/components/search-engine/query-info';
@@ -54,6 +55,7 @@ export default function SearchPage() {
           </Link>
           <Sparkles size={20} className="text-blue-400" />
           <h1 className="text-lg font-semibold flex-1">AI Search Engine</h1>
+          <HelpButton feature="search" />
           <Link
             href="/search/analytics"
             className="text-gray-400 hover:text-white flex items-center gap-1 text-sm"

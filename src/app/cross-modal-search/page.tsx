@@ -18,6 +18,7 @@ import {
   BarChart3,
   Layers,
 } from 'lucide-react';
+import { HelpButton } from '@/components/shared';
 import { useMultiModalRAG } from '@/hooks/use-multi-modal-rag';
 import type { CrossModalSearchResult } from '@/types/multi-modal-rag';
 
@@ -108,10 +109,11 @@ export default function CrossModalSearchPage() {
             <ArrowLeft size={20} />
           </Link>
           <Layers size={20} className="text-cyan-400" />
-          <h1 className="text-lg font-semibold">Cross-Modal RAG Search</h1>
+          <h1 className="text-lg font-semibold flex-1">Cross-Modal RAG Search</h1>
           <Badge variant="outline" className="text-[10px]">
             Image + Text
           </Badge>
+          <HelpButton feature="cross-modal-search" />
         </div>
       </header>
 

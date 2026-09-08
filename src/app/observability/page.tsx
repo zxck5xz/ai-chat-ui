@@ -11,6 +11,7 @@ import { AlertPanel } from '@/components/observability/alert-panel';
 import { SlowTraces } from '@/components/observability/slow-traces';
 import { Button } from '@/components/ui/button';
 import { RefreshCw, Eye, DollarSign, Gauge, Bell } from 'lucide-react';
+import { HelpButton } from '@/components/shared';
 
 type Tab = 'overview' | 'traces' | 'cost' | 'latency' | 'alerts';
 
@@ -82,10 +83,13 @@ export default function ObservabilityDashboard() {
             Monitor traces, costs, latency, and alerts across all AI services
           </p>
         </div>
-        <Button onClick={loadAll} disabled={loading}>
-          <RefreshCw className={`h-4 w-4 mr-2 ${loading ? 'animate-spin' : ''}`} />
-          Refresh
-        </Button>
+        <div className="flex items-center gap-2">
+          <HelpButton feature="observability" />
+          <Button onClick={loadAll} disabled={loading}>
+            <RefreshCw className={`h-4 w-4 mr-2 ${loading ? 'animate-spin' : ''}`} />
+            Refresh
+          </Button>
+        </div>
       </div>
 
       {error && (

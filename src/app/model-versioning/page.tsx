@@ -10,6 +10,7 @@ import { DeployForm } from '@/components/model-versioning/deploy-form';
 import { RollbackForm } from '@/components/model-versioning/rollback-form';
 import Link from 'next/link';
 import { ArrowLeft, GitBranch, Rocket, RotateCcw } from 'lucide-react';
+import { HelpButton } from '@/components/shared';
 import type { ModelVersion, ModelDeployment } from '@/types/model-versioning';
 
 export default function ModelVersioningDashboard() {
@@ -82,12 +83,13 @@ export default function ModelVersioningDashboard() {
               <Link href="/chat" className="text-muted-foreground hover:text-foreground">
                 <ArrowLeft className="h-5 w-5" />
               </Link>
-              <div>
+              <div className="flex-1">
                 <h1 className="text-2xl font-bold">Model Versioning</h1>
                 <p className="text-sm text-muted-foreground">
                   Manage model versions, deployments, and rollbacks
                 </p>
               </div>
+              <HelpButton feature="model-versioning" />
             </div>
           </div>
         </div>

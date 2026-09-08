@@ -9,6 +9,7 @@ import {
   ArrowLeft, Eye, FileText, ArrowLeftRight, MessageSquare,
   Loader2, Sparkles, Camera, Receipt, Code, BarChart3
 } from 'lucide-react';
+import { HelpButton } from '@/components/shared';
 import { ImageUploader } from '@/components/multi-modal/image-uploader';
 import { AnalysisResult } from '@/components/multi-modal/analysis-result';
 import { DocumentViewer } from '@/components/multi-modal/document-viewer';
@@ -19,7 +20,7 @@ import type { AnalysisType, ChatImage } from '@/types/multi-modal';
 
 type Tab = 'analyze' | 'document' | 'compare' | 'chat';
 
-const ANALYSIS_TYPES: { type: AnalysisType; label: string; icon: any; description: string }[] = [
+const ANALYSIS_TYPES: { type: AnalysisType; label: string; icon: typeof Eye; description: string }[] = [
   { type: 'describe', label: 'Describe', icon: Eye, description: 'Detailed image description' },
   { type: 'ocr', label: 'OCR', icon: FileText, description: 'Extract text from image' },
   { type: 'code_screenshot', label: 'Code', icon: Code, description: 'Extract code from screenshot' },
@@ -59,7 +60,7 @@ export default function MultiModalPage() {
     await understandDocument(file.base64, file.mimeType);
   }, [understandDocument]);
 
-  const tabs: { id: Tab; label: string; icon: any }[] = [
+  const tabs: { id: Tab; label: string; icon: typeof Camera }[] = [
     { id: 'analyze', label: 'Image Analysis', icon: Camera },
     { id: 'document', label: 'Document', icon: FileText },
     { id: 'compare', label: 'Compare', icon: ArrowLeftRight },
@@ -75,8 +76,9 @@ export default function MultiModalPage() {
             <ArrowLeft size={20} />
           </Link>
           <Sparkles size={20} className="text-purple-400" />
-          <h1 className="text-lg font-semibold">Multi-Modal AI</h1>
+          <h1 className="text-lg font-semibold flex-1">Multi-Modal AI</h1>
           <Badge variant="outline" className="text-[10px]">Vision + Text</Badge>
+          <HelpButton feature="multi-modal" />
         </div>
       </header>
 

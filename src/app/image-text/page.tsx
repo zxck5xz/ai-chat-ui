@@ -6,6 +6,7 @@ import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { ArrowLeft, Type, Loader2, Sparkles, Download, RotateCcw } from 'lucide-react';
+import { HelpButton } from '@/components/shared';
 import { ImageUploader } from '@/components/multi-modal/image-uploader';
 import { TextRegionSelector } from '@/components/image-text-replacement/text-region-selector';
 import { ComparisonSlider } from '@/components/image-text-replacement/comparison-slider';
@@ -88,10 +89,11 @@ export default function ImageTextPage() {
             <ArrowLeft size={20} />
           </Link>
           <Type size={20} className="text-emerald-400" />
-          <h1 className="text-lg font-semibold">Image Text Replacement</h1>
+          <h1 className="text-lg font-semibold flex-1">Image Text Replacement</h1>
           <Badge variant="outline" className="text-[10px]">
             OCR + AI Redraw
           </Badge>
+          <HelpButton feature="image-text" />
         </div>
       </header>
 

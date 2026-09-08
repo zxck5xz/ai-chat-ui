@@ -10,6 +10,7 @@ import { ABTestPanel } from '@/components/fine-tuning/ab-test-panel';
 import { LossChart } from '@/components/fine-tuning/loss-chart';
 import { Button } from '@/components/ui/button';
 import { RefreshCw, Database, Play, TrendingUp, FlaskConical } from 'lucide-react';
+import { HelpButton } from '@/components/shared';
 
 type Tab = 'datasets' | 'training' | 'eval' | 'ab-test';
 
@@ -87,10 +88,13 @@ export default function FineTuningDashboard() {
             Dataset curation, LoRA/QLoRA training, model evaluation, and A/B testing
           </p>
         </div>
-        <Button onClick={loadAll} disabled={loading}>
-          <RefreshCw className={`h-4 w-4 mr-2 ${loading ? 'animate-spin' : ''}`} />
-          Refresh
-        </Button>
+        <div className="flex items-center gap-2">
+          <HelpButton feature="fine-tuning" />
+          <Button onClick={loadAll} disabled={loading}>
+            <RefreshCw className={`h-4 w-4 mr-2 ${loading ? 'animate-spin' : ''}`} />
+            Refresh
+          </Button>
+        </div>
       </div>
 
       {error && (

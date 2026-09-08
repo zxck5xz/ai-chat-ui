@@ -9,6 +9,7 @@ import { ConnectServerForm } from '@/components/mcp/connect-server-form';
 import { CallLog } from '@/components/mcp/call-log';
 import Link from 'next/link';
 import { ArrowLeft, Server, Wrench, Activity } from 'lucide-react';
+import { HelpButton } from '@/components/shared';
 
 export default function MCPDashboard() {
   const [activeTab, setActiveTab] = useState<'overview' | 'servers' | 'tools' | 'log'>('overview');
@@ -63,12 +64,13 @@ export default function MCPDashboard() {
               <Link href="/chat" className="text-muted-foreground hover:text-foreground">
                 <ArrowLeft className="h-5 w-5" />
               </Link>
-              <div>
+              <div className="flex-1">
                 <h1 className="text-2xl font-bold">MCP Dashboard</h1>
                 <p className="text-sm text-muted-foreground">
                   Model Context Protocol - Server & Client Management
                 </p>
               </div>
+              <HelpButton feature="mcp" />
             </div>
           </div>
         </div>

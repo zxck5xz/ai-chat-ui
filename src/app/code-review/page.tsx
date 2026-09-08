@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { ArrowLeft, RefreshCw, Code } from 'lucide-react';
+import { HelpButton } from '@/components/shared';
 import { useCodeReview } from '@/hooks/use-code-review';
 import { MetricsCards } from '@/components/code-review/metrics-cards';
 import { ReviewList } from '@/components/code-review/review-list';
@@ -62,10 +63,13 @@ export default function CodeReviewPage() {
               <h1 className="text-2xl font-bold">AI Code Review</h1>
             </div>
           </div>
-          <Button variant="outline" onClick={handleRefresh} disabled={loading}>
-            <RefreshCw className={`h-4 w-4 mr-2 ${loading ? 'animate-spin' : ''}`} />
-            Refresh
-          </Button>
+          <div className="flex items-center gap-2">
+            <HelpButton feature="code-review" />
+            <Button variant="outline" onClick={handleRefresh} disabled={loading}>
+              <RefreshCw className={`h-4 w-4 mr-2 ${loading ? 'animate-spin' : ''}`} />
+              Refresh
+            </Button>
+          </div>
         </div>
       </header>
 
