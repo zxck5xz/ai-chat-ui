@@ -90,9 +90,12 @@ export function useMultiModalRAG() {
   const fetchDocuments = useCallback(async () => {
     try {
       const res = await fetch(`${API_BASE}/api/multi-modal-rag/documents`);
-      if (!res.ok) throw new Error('Failed to fetch documents');
+      if (!res.ok) {
+        const body = await res.json().catch(() => null);
+        throw new Error(body?.details || body?.error || `HTTP ${res.status}`);
+      }
       const data = await res.json();
-      setDocuments(data.documents);
+      setDocuments(data.documents || []);
     } catch (e: unknown) {
       const msg = e instanceof Error ? e.message : 'Unknown error';
       setError(msg);
@@ -112,7 +115,10 @@ export function useMultiModalRAG() {
   const fetchMetrics = useCallback(async () => {
     try {
       const res = await fetch(`${API_BASE}/api/multi-modal-rag/metrics`);
-      if (!res.ok) throw new Error('Failed to fetch metrics');
+      if (!res.ok) {
+        const body = await res.json().catch(() => null);
+        throw new Error(body?.details || body?.error || `HTTP ${res.status}`);
+      }
       const data = await res.json();
       setMetrics(data.metrics);
     } catch (e: unknown) {
