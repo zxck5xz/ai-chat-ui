@@ -319,6 +319,14 @@ export function ChatInterface() {
             </Button>
           </Link>
         </div>
+        <div className="p-2">
+          <Link href="/memory">
+            <Button variant="outline" className="w-full flex items-center gap-2">
+              <Brain size={16} className="text-pink-500" />
+              Long-Term Memory
+            </Button>
+          </Link>
+        </div>
         <div className="p-2 border-t">
           <div className="flex items-center justify-between px-2 py-1">
             <span className="text-xs text-muted-foreground">RAG Mode</span>
