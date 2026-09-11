@@ -27,6 +27,7 @@ import {
   Link as LinkIcon,
   Layers,
   Brain,
+  Swords,
 } from 'lucide-react';
 import { useEffect, useCallback, useState, useRef, useMemo } from 'react';
 import { DocumentUpload } from './document-upload';
@@ -324,6 +325,14 @@ export function ChatInterface() {
             <Button variant="outline" className="w-full flex items-center gap-2">
               <Brain size={16} className="text-pink-500" />
               Long-Term Memory
+            </Button>
+          </Link>
+        </div>
+        <div className="p-2">
+          <Link href="/debate">
+            <Button variant="outline" className="w-full flex items-center gap-2">
+              <Swords size={16} className="text-amber-500" />
+              Multi-Agent Debate
             </Button>
           </Link>
         </div>
