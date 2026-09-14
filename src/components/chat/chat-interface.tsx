@@ -28,6 +28,7 @@ import {
   Layers,
   Brain,
   Swords,
+  Monitor,
 } from 'lucide-react';
 import { useEffect, useCallback, useState, useRef, useMemo } from 'react';
 import { DocumentUpload } from './document-upload';
@@ -333,6 +334,14 @@ export function ChatInterface() {
             <Button variant="outline" className="w-full flex items-center gap-2">
               <Swords size={16} className="text-amber-500" />
               Multi-Agent Debate
+            </Button>
+          </Link>
+        </div>
+        <div className="p-2">
+          <Link href="/edge-ai">
+            <Button variant="outline" className="w-full flex items-center gap-2">
+              <Monitor size={16} className="text-cyan-500" />
+              Edge AI Inference
             </Button>
           </Link>
         </div>
