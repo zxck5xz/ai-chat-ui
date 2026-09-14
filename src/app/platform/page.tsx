@@ -61,34 +61,36 @@ export default function PlatformPage() {
     fetchStructuredMetrics,
   } = usePlatform();
 
-  // Load the catalog once, then pick up any tenant remembered from last visit
+  // Load the catalog once. Every fetcher is a stable useCallback, so listing
+  // them as deps is honest without causing a refetch loop.
   useEffect(() => {
     fetchTiers();
     fetchSchemas();
-    fetchTenants().then((list) => {
-      if (!tenantId && list.length > 0) setTenantId(list[0].id);
-    });
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+    fetchTenants();
+  }, [fetchTiers, fetchSchemas, fetchTenants]);
+
+  // Derived, not stored: fall back to the first tenant until one is picked,
+  // so no effect has to write state to seed the selection.
+  const activeTenantId = tenantId ?? tenants[0]?.id ?? null;
 
   useEffect(() => {
-    if (!tenantId) return;
-    fetchTenant(tenantId);
-    fetchKeys(tenantId);
-  }, [tenantId, fetchTenant, fetchKeys]);
+    if (!activeTenantId) return;
+    fetchTenant(activeTenantId);
+    fetchKeys(activeTenantId);
+  }, [activeTenantId, fetchTenant, fetchKeys]);
 
   // Each tab pulls only what it shows, refreshed on entry
   useEffect(() => {
-    if (!tenantId) return;
+    if (!activeTenantId) return;
 
     if (activeTab === 'usage') {
-      fetchUsage(tenantId);
-      fetchRecords(tenantId);
-      fetchQuota(tenantId);
+      fetchUsage(activeTenantId);
+      fetchRecords(activeTenantId);
+      fetchQuota(activeTenantId);
     }
     if (activeTab === 'billing') {
-      fetchInvoice(tenantId);
-      fetchEvents(tenantId);
+      fetchInvoice(activeTenantId);
+      fetchEvents(activeTenantId);
       fetchStructuredMetrics();
     }
     if (activeTab === 'schemas') {
@@ -96,7 +98,7 @@ export default function PlatformPage() {
     }
   }, [
     activeTab,
-    tenantId,
+    activeTenantId,
     fetchUsage,
     fetchRecords,
     fetchQuota,
@@ -150,7 +152,7 @@ export default function PlatformPage() {
 
         {tenants.length > 0 ? (
           <select
-            value={tenantId ?? ''}
+            value={activeTenantId ?? ''}
             onChange={(e) => setTenantId(e.target.value || null)}
             className="rounded border px-2 py-1.5 text-sm"
           >
@@ -226,7 +228,7 @@ export default function PlatformPage() {
         ))}
       </div>
 
-      {!tenantId && activeTab !== 'schemas' ? (
+      {!activeTenantId && activeTab !== 'schemas' ? (
         <div className="rounded-lg border border-dashed py-12 text-center">
           <p className="text-sm text-gray-500">
             Create a tenant to issue API keys and see metered usage.
@@ -240,9 +242,11 @@ export default function PlatformPage() {
               newKey={newKey}
               limits={currentLimits}
               loading={loading}
-              onCreate={(name, options) => tenantId && createKey(tenantId, name, options)}
+              onCreate={(name, options) =>
+                activeTenantId && createKey(activeTenantId, name, options)
+              }
               onRevoke={revokeKey}
-              onRotate={(keyId) => tenantId && rotateKey(keyId, tenantId)}
+              onRotate={(keyId) => activeTenantId && rotateKey(keyId, activeTenantId)}
               onDismissNewKey={dismissNewKey}
             />
           )}
@@ -271,9 +275,13 @@ export default function PlatformPage() {
               events={events}
               structuredMetrics={structuredMetrics}
               loading={loading}
-              onChangeTier={(tier: Tier) => tenantId && updateTenant(tenantId, { tier })}
-              onSetWebhook={(url) => tenantId && updateTenant(tenantId, { webhook_url: url })}
-              onRetryEvents={() => tenantId && retryEvents(tenantId)}
+              onChangeTier={(tier: Tier) =>
+                activeTenantId && updateTenant(activeTenantId, { tier })
+              }
+              onSetWebhook={(url) =>
+                activeTenantId && updateTenant(activeTenantId, { webhook_url: url })
+              }
+              onRetryEvents={() => activeTenantId && retryEvents(activeTenantId)}
             />
           )}
         </>
